@@ -318,6 +318,9 @@ class CloudX {
 // Export singleton instance
 export const CloudXSDKManager = new CloudX();
 
+// Export React Hooks
+export { useCloudXInterstitial, useCloudXRewarded, useCloudXBanner } from './hooks';
+
 // Export event types
 export const CloudXEventTypes = {
   // Banner events
