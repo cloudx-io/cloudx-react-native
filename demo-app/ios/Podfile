@@ -1,0 +1,45 @@
+# Podfile for CloudX React Native Demo App
+
+require_relative '../node_modules/react-native/scripts/react_native_pods'
+require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
+
+platform :ios, '13.0'
+install! 'cocoapods', :deterministic_uuids => false
+
+target 'CloudXReactNativeDemo' do
+  config = use_native_modules!
+
+  # Flags change depending on the env values.
+  flags = get_default_flags()
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    :hermes_enabled => flags[:hermes_enabled],
+    :fabric_enabled => flags[:fabric_enabled],
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
+
+  # CloudX React Native SDK (local)
+  pod 'cloudx-react-native', :path => '../..'
+  
+  # CloudXCore SDK (local development) 
+  # Adjust path based on your monorepo structure
+  pod 'CloudXCore', :path => '../../cloudx-ios/core'
+  
+  # CloudX Meta Adapter (optional, for Meta ads)
+  # pod 'CloudXMetaAdapter', :path => '../../cloudx-ios/adapter-meta'
+
+  target 'CloudXReactNativeDemoTests' do
+    inherit! :complete
+    # Pods for testing
+  end
+
+  post_install do |installer|
+    react_native_post_install(
+      installer,
+      :mac_catalyst_enabled => false
+    )
+    __apply_Xcode_12_5_M1_post_install_workaround(installer)
+  end
+end
+
