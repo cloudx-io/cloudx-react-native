@@ -13,4 +13,7 @@
 @property (nonatomic, strong) NSMutableDictionary<NSString *, id<CLXRewarded>> *rewardeds;
 @property (nonatomic, strong) NSMutableDictionary<NSString *, id<CLXBanner>> *banners;
 
+// Map ad instances to adIds for delegate callbacks
+@property (nonatomic, strong) NSMapTable<id, NSString *> *adInstanceToAdId;
+
 @end

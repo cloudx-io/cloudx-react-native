@@ -17,6 +17,8 @@ RCT_EXPORT_MODULE(CloudXSDK);
         _interstitials = [NSMutableDictionary new];
         _rewardeds = [NSMutableDictionary new];
         _banners = [NSMutableDictionary new];
+        _adInstanceToAdId = [NSMapTable mapTableWithKeyOptions:NSPointerFunctionsWeakMemory
+                                                   valueOptions:NSPointerFunctionsStrongMemory];
     }
     return self;
 }
@@ -261,9 +263,10 @@ RCT_EXPORT_METHOD(createBanner:(NSDictionary *)config
         }
 
         id<CLXBanner> banner = [[CloudXCore shared] createBannerWithPlacement:placement
-                                                                       delegate:self];
+                                                                     delegate:self];
         if (banner) {
             self.banners[adId] = banner;
+            [self.adInstanceToAdId setObject:adId forKey:banner];
             resolve(@{@"success": @YES, @"adId": adId});
         } else {
             reject(@"CREATE_FAILED", @"Failed to create banner", nil);
@@ -374,6 +377,7 @@ RCT_EXPORT_METHOD(createInterstitial:(NSDictionary *)config
                                                                                         delegate:self];
         if (interstitial) {
             self.interstitials[adId] = interstitial;
+            [self.adInstanceToAdId setObject:adId forKey:interstitial];
             resolve(@{@"success": @YES, @"adId": adId});
         } else {
             reject(@"CREATE_FAILED", @"Failed to create interstitial", nil);
@@ -448,9 +452,10 @@ RCT_EXPORT_METHOD(createRewarded:(NSDictionary *)config
         }
 
         id<CLXRewarded> rewarded = [[CloudXCore shared] createRewardedWithPlacement:placement
-                                                                            delegate:self];
+                                                                           delegate:self];
         if (rewarded) {
             self.rewardeds[adId] = rewarded;
+            [self.adInstanceToAdId setObject:adId forKey:rewarded];
             resolve(@{@"success": @YES, @"adId": adId});
         } else {
             reject(@"CREATE_FAILED", @"Failed to create rewarded", nil);
@@ -546,115 +551,221 @@ RCT_EXPORT_METHOD(destroyAd:(NSDictionary *)config
     });
 }
 
-#pragma mark - CLXBannerDelegate
+#pragma mark - CLXAdDelegate (Common for Banner, Interstitial, Rewarded)
 
-- (void)bannerDidLoad:(id<CLXBanner>)banner {
-    NSString *adId = [self getAdIdForBanner:banner];
-    [self sendEventWithName:@"onBannerLoaded" body:@{@"adId": adId ?: @""}];
+- (void)didLoadWithAd:(CLXAd *)ad {
+    // Try to find which type of ad this is
+    NSString *adId = [self findAdIdForCLXAd:ad inDictionary:self.banners];
+    if (adId) {
+        [self sendEventWithName:@"onBannerLoaded" body:[self adDataFromCLXAd:ad withAdId:adId]];
+        return;
+    }
+    
+    adId = [self findAdIdForCLXAd:ad inDictionary:self.interstitials];
+    if (adId) {
+        [self sendEventWithName:@"onInterstitialLoaded" body:[self adDataFromCLXAd:ad withAdId:adId]];
+        return;
+    }
+    
+    adId = [self findAdIdForCLXAd:ad inDictionary:self.rewardeds];
+    if (adId) {
+        [self sendEventWithName:@"onRewardedLoaded" body:[self adDataFromCLXAd:ad withAdId:adId]];
+    }
 }
 
-- (void)banner:(id<CLXBanner>)banner didFailToLoadWithError:(NSError *)error {
-    NSString *adId = [self getAdIdForBanner:banner];
-    [self sendEventWithName:@"onBannerFailedToLoad"
-                       body:@{
-                           @"adId": adId ?: @"",
-                           @"error": error.localizedDescription ?: @""
-                       }];
+- (void)failToLoadWithAd:(CLXAd *)ad error:(NSError *)error {
+    NSString *adId = [self findAdIdForCLXAd:ad inDictionary:self.banners];
+    if (adId) {
+        NSMutableDictionary *eventData = [[self adDataFromCLXAd:ad withAdId:adId] mutableCopy];
+        eventData[@"error"] = error.localizedDescription ?: @"";
+        [self sendEventWithName:@"onBannerFailedToLoad" body:eventData];
+        return;
+    }
+    
+    adId = [self findAdIdForCLXAd:ad inDictionary:self.interstitials];
+    if (adId) {
+        NSMutableDictionary *eventData = [[self adDataFromCLXAd:ad withAdId:adId] mutableCopy];
+        eventData[@"error"] = error.localizedDescription ?: @"";
+        [self sendEventWithName:@"onInterstitialFailedToLoad" body:eventData];
+        return;
+    }
+    
+    adId = [self findAdIdForCLXAd:ad inDictionary:self.rewardeds];
+    if (adId) {
+        NSMutableDictionary *eventData = [[self adDataFromCLXAd:ad withAdId:adId] mutableCopy];
+        eventData[@"error"] = error.localizedDescription ?: @"";
+        [self sendEventWithName:@"onRewardedFailedToLoad" body:eventData];
+    }
 }
 
-- (void)bannerDidShow:(id<CLXBanner>)banner {
-    NSString *adId = [self getAdIdForBanner:banner];
-    [self sendEventWithName:@"onBannerShown" body:@{@"adId": adId ?: @""}];
+- (void)didShowWithAd:(CLXAd *)ad {
+    NSString *adId = [self findAdIdForCLXAd:ad inDictionary:self.banners];
+    if (adId) {
+        [self sendEventWithName:@"onBannerShown" body:[self adDataFromCLXAd:ad withAdId:adId]];
+        return;
+    }
+    
+    adId = [self findAdIdForCLXAd:ad inDictionary:self.interstitials];
+    if (adId) {
+        [self sendEventWithName:@"onInterstitialShown" body:[self adDataFromCLXAd:ad withAdId:adId]];
+        return;
+    }
+    
+    adId = [self findAdIdForCLXAd:ad inDictionary:self.rewardeds];
+    if (adId) {
+        [self sendEventWithName:@"onRewardedShown" body:[self adDataFromCLXAd:ad withAdId:adId]];
+    }
 }
 
-- (void)bannerDidClick:(id<CLXBanner>)banner {
-    NSString *adId = [self getAdIdForBanner:banner];
-    [self sendEventWithName:@"onBannerClicked" body:@{@"adId": adId ?: @""}];
+- (void)failToShowWithAd:(CLXAd *)ad error:(NSError *)error {
+    NSString *adId = [self findAdIdForCLXAd:ad inDictionary:self.interstitials];
+    if (adId) {
+        NSMutableDictionary *eventData = [[self adDataFromCLXAd:ad withAdId:adId] mutableCopy];
+        eventData[@"error"] = error.localizedDescription ?: @"";
+        [self sendEventWithName:@"onInterstitialFailedToShow" body:eventData];
+        return;
+    }
+    
+    adId = [self findAdIdForCLXAd:ad inDictionary:self.rewardeds];
+    if (adId) {
+        NSMutableDictionary *eventData = [[self adDataFromCLXAd:ad withAdId:adId] mutableCopy];
+        eventData[@"error"] = error.localizedDescription ?: @"";
+        [self sendEventWithName:@"onRewardedFailedToShow" body:eventData];
+    }
 }
 
-#pragma mark - CLXInterstitialDelegate
-
-- (void)interstitialDidLoad:(id<CLXInterstitial>)interstitial {
-    NSString *adId = [self getAdIdForInterstitial:interstitial];
-    [self sendEventWithName:@"onInterstitialLoaded" body:@{@"adId": adId ?: @""}];
+- (void)didHideWithAd:(CLXAd *)ad {
+    NSString *adId = [self findAdIdForCLXAd:ad inDictionary:self.banners];
+    if (adId) {
+        [self sendEventWithName:@"onBannerHidden" body:[self adDataFromCLXAd:ad withAdId:adId]];
+        return;
+    }
+    
+    adId = [self findAdIdForCLXAd:ad inDictionary:self.interstitials];
+    if (adId) {
+        [self sendEventWithName:@"onInterstitialClosed" body:[self adDataFromCLXAd:ad withAdId:adId]];
+        return;
+    }
+    
+    adId = [self findAdIdForCLXAd:ad inDictionary:self.rewardeds];
+    if (adId) {
+        [self sendEventWithName:@"onRewardedClosed" body:[self adDataFromCLXAd:ad withAdId:adId]];
+    }
 }
 
-- (void)interstitial:(id<CLXInterstitial>)interstitial didFailToLoadWithError:(NSError *)error {
-    NSString *adId = [self getAdIdForInterstitial:interstitial];
-    [self sendEventWithName:@"onInterstitialFailedToLoad"
-                       body:@{
-                           @"adId": adId ?: @"",
-                           @"error": error.localizedDescription ?: @""
-                       }];
+- (void)didClickWithAd:(CLXAd *)ad {
+    NSString *adId = [self findAdIdForCLXAd:ad inDictionary:self.banners];
+    if (adId) {
+        [self sendEventWithName:@"onBannerClicked" body:[self adDataFromCLXAd:ad withAdId:adId]];
+        return;
+    }
+    
+    adId = [self findAdIdForCLXAd:ad inDictionary:self.interstitials];
+    if (adId) {
+        [self sendEventWithName:@"onInterstitialClicked" body:[self adDataFromCLXAd:ad withAdId:adId]];
+        return;
+    }
+    
+    adId = [self findAdIdForCLXAd:ad inDictionary:self.rewardeds];
+    if (adId) {
+        [self sendEventWithName:@"onRewardedClicked" body:[self adDataFromCLXAd:ad withAdId:adId]];
+    }
 }
 
-- (void)interstitialDidShow:(id<CLXInterstitial>)interstitial {
-    NSString *adId = [self getAdIdForInterstitial:interstitial];
-    [self sendEventWithName:@"onInterstitialShown" body:@{@"adId": adId ?: @""}];
+- (void)impressionOn:(CLXAd *)ad {
+    NSString *adId = [self findAdIdForCLXAd:ad inDictionary:self.banners];
+    if (adId) {
+        [self sendEventWithName:@"onBannerImpression" body:[self adDataFromCLXAd:ad withAdId:adId]];
+        return;
+    }
+    
+    adId = [self findAdIdForCLXAd:ad inDictionary:self.interstitials];
+    if (adId) {
+        [self sendEventWithName:@"onInterstitialImpression" body:[self adDataFromCLXAd:ad withAdId:adId]];
+        return;
+    }
+    
+    adId = [self findAdIdForCLXAd:ad inDictionary:self.rewardeds];
+    if (adId) {
+        [self sendEventWithName:@"onRewardedImpression" body:[self adDataFromCLXAd:ad withAdId:adId]];
+    }
 }
 
-- (void)interstitial:(id<CLXInterstitial>)interstitial didFailToShowWithError:(NSError *)error {
-    NSString *adId = [self getAdIdForInterstitial:interstitial];
-    [self sendEventWithName:@"onInterstitialFailedToShow"
-                       body:@{
-                           @"adId": adId ?: @"",
-                           @"error": error.localizedDescription ?: @""
-                       }];
+- (void)revenuePaid:(CLXAd *)ad {
+    NSString *adId = [self findAdIdForCLXAd:ad inDictionary:self.banners];
+    if (adId) {
+        [self sendEventWithName:@"onBannerRevenuePaid" body:[self adDataFromCLXAd:ad withAdId:adId]];
+        return;
+    }
+    
+    adId = [self findAdIdForCLXAd:ad inDictionary:self.interstitials];
+    if (adId) {
+        [self sendEventWithName:@"onInterstitialRevenuePaid" body:[self adDataFromCLXAd:ad withAdId:adId]];
+        return;
+    }
+    
+    adId = [self findAdIdForCLXAd:ad inDictionary:self.rewardeds];
+    if (adId) {
+        [self sendEventWithName:@"onRewardedRevenuePaid" body:[self adDataFromCLXAd:ad withAdId:adId]];
+    }
 }
 
-- (void)interstitialDidClose:(id<CLXInterstitial>)interstitial {
-    NSString *adId = [self getAdIdForInterstitial:interstitial];
-    [self sendEventWithName:@"onInterstitialClosed" body:@{@"adId": adId ?: @""}];
+- (void)closedByUserActionWithAd:(CLXAd *)ad {
+    NSString *adId = [self findAdIdForCLXAd:ad inDictionary:self.banners];
+    if (adId) {
+        [self sendEventWithName:@"onBannerClosedByUser" body:[self adDataFromCLXAd:ad withAdId:adId]];
+        return;
+    }
+    
+    adId = [self findAdIdForCLXAd:ad inDictionary:self.interstitials];
+    if (adId) {
+        [self sendEventWithName:@"onInterstitialClosedByUser" body:[self adDataFromCLXAd:ad withAdId:adId]];
+        return;
+    }
+    
+    adId = [self findAdIdForCLXAd:ad inDictionary:self.rewardeds];
+    if (adId) {
+        [self sendEventWithName:@"onRewardedClosedByUser" body:[self adDataFromCLXAd:ad withAdId:adId]];
+    }
 }
 
-- (void)interstitialDidClick:(id<CLXInterstitial>)interstitial {
-    NSString *adId = [self getAdIdForInterstitial:interstitial];
-    [self sendEventWithName:@"onInterstitialClicked" body:@{@"adId": adId ?: @""}];
+#pragma mark - CLXRewardedDelegate (Rewarded-specific)
+
+- (void)userRewarded:(CLXAd *)ad {
+    NSString *adId = [self findAdIdForCLXAd:ad inDictionary:self.rewardeds];
+    if (adId) {
+        [self sendEventWithName:@"onRewardEarned" body:[self adDataFromCLXAd:ad withAdId:adId]];
+    }
 }
 
-#pragma mark - CLXRewardedDelegate
-
-- (void)rewardedDidLoad:(id<CLXRewarded>)rewarded {
-    NSString *adId = [self getAdIdForRewarded:rewarded];
-    [self sendEventWithName:@"onRewardedLoaded" body:@{@"adId": adId ?: @""}];
+- (void)rewardedVideoStarted:(CLXAd *)ad {
+    NSString *adId = [self findAdIdForCLXAd:ad inDictionary:self.rewardeds];
+    if (adId) {
+        [self sendEventWithName:@"onRewardedVideoStarted" body:[self adDataFromCLXAd:ad withAdId:adId]];
+    }
 }
 
-- (void)rewarded:(id<CLXRewarded>)rewarded didFailToLoadWithError:(NSError *)error {
-    NSString *adId = [self getAdIdForRewarded:rewarded];
-    [self sendEventWithName:@"onRewardedFailedToLoad"
-                       body:@{
-                           @"adId": adId ?: @"",
-                           @"error": error.localizedDescription ?: @""
-                       }];
+- (void)rewardedVideoCompleted:(CLXAd *)ad {
+    NSString *adId = [self findAdIdForCLXAd:ad inDictionary:self.rewardeds];
+    if (adId) {
+        [self sendEventWithName:@"onRewardedVideoCompleted" body:[self adDataFromCLXAd:ad withAdId:adId]];
+    }
 }
 
-- (void)rewardedDidShow:(id<CLXRewarded>)rewarded {
-    NSString *adId = [self getAdIdForRewarded:rewarded];
-    [self sendEventWithName:@"onRewardedShown" body:@{@"adId": adId ?: @""}];
+#pragma mark - CLXBannerDelegate (Banner-specific)
+
+- (void)didExpandAd:(CLXAd *)ad {
+    NSString *adId = [self findAdIdForCLXAd:ad inDictionary:self.banners];
+    if (adId) {
+        [self sendEventWithName:@"onBannerExpanded" body:[self adDataFromCLXAd:ad withAdId:adId]];
+    }
 }
 
-- (void)rewarded:(id<CLXRewarded>)rewarded didFailToShowWithError:(NSError *)error {
-    NSString *adId = [self getAdIdForRewarded:rewarded];
-    [self sendEventWithName:@"onRewardedFailedToShow"
-                       body:@{
-                           @"adId": adId ?: @"",
-                           @"error": error.localizedDescription ?: @""
-                       }];
-}
-
-- (void)rewardedDidClose:(id<CLXRewarded>)rewarded {
-    NSString *adId = [self getAdIdForRewarded:rewarded];
-    [self sendEventWithName:@"onRewardedClosed" body:@{@"adId": adId ?: @""}];
-}
-
-- (void)rewardedDidClick:(id<CLXRewarded>)rewarded {
-    NSString *adId = [self getAdIdForRewarded:rewarded];
-    [self sendEventWithName:@"onRewardedClicked" body:@{@"adId": adId ?: @""}];
-}
-
-- (void)rewardedDidEarnReward:(id<CLXRewarded>)rewarded {
-    NSString *adId = [self getAdIdForRewarded:rewarded];
-    [self sendEventWithName:@"onRewardEarned" body:@{@"adId": adId ?: @""}];
+- (void)didCollapseAd:(CLXAd *)ad {
+    NSString *adId = [self findAdIdForCLXAd:ad inDictionary:self.banners];
+    if (adId) {
+        [self sendEventWithName:@"onBannerCollapsed" body:[self adDataFromCLXAd:ad withAdId:adId]];
+    }
 }
 
 #pragma mark - Helper Methods
@@ -684,6 +795,47 @@ RCT_EXPORT_METHOD(destroyAd:(NSDictionary *)config
         }
     }
     return nil;
+}
+
+// Helper to find adId from CLXAd placement
+- (NSString *)findAdIdForCLXAd:(CLXAd *)ad inDictionary:(NSDictionary *)dict {
+    NSString *placementName = ad.placementName;
+    if (!placementName) return nil;
+    
+    for (NSString *adId in dict) {
+        id adInstance = dict[adId];
+        NSString *storedAdId = [self.adInstanceToAdId objectForKey:adInstance];
+        if ([storedAdId isEqualToString:adId]) {
+            // For now, match by placement name (assumes one ad per placement)
+            // TODO: Better matching if CloudXCore provides instance reference
+            return adId;
+        }
+    }
+    
+    // Fallback: return any adId (for single ad case)
+    return dict.allKeys.firstObject;
+}
+
+// Helper to convert CLXAd to dictionary
+- (NSDictionary *)adDataFromCLXAd:(CLXAd *)ad withAdId:(NSString *)adId {
+    NSMutableDictionary *adData = [NSMutableDictionary dictionaryWithDictionary:@{
+        @"adId": adId ?: @""
+    }];
+    
+    if (ad) {
+        NSMutableDictionary *adInfo = [NSMutableDictionary dictionary];
+        if (ad.placementName) adInfo[@"placementName"] = ad.placementName;
+        if (ad.placementId) adInfo[@"placementId"] = ad.placementId;
+        if (ad.bidder) adInfo[@"network"] = ad.bidder;
+        if (ad.revenue) adInfo[@"revenue"] = @([ad.revenue doubleValue]);
+        if (ad.externalPlacementId) adInfo[@"externalPlacementId"] = ad.externalPlacementId;
+        
+        if (adInfo.count > 0) {
+            adData[@"ad"] = adInfo;
+        }
+    }
+    
+    return adData;
 }
 
 @end
