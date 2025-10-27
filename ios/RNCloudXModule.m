@@ -16,6 +16,7 @@ RCT_EXPORT_MODULE(CloudXSDK);
     if (self = [super init]) {
         _interstitials = [NSMutableDictionary new];
         _rewardeds = [NSMutableDictionary new];
+        _banners = [NSMutableDictionary new];
     }
     return self;
 }
@@ -26,18 +27,33 @@ RCT_EXPORT_MODULE(CloudXSDK);
 
 - (NSArray<NSString *> *)supportedEvents {
     return @[
+        // Banner events
+        @"onBannerLoaded",
+        @"onBannerFailedToLoad",
+        @"onBannerShown",
+        @"onBannerFailedToShow",
+        @"onBannerHidden",
+        @"onBannerClicked",
+        @"onBannerImpression",
+        @"onBannerRevenuePaid",
+        // Interstitial events
         @"onInterstitialLoaded",
         @"onInterstitialFailedToLoad",
         @"onInterstitialShown",
         @"onInterstitialFailedToShow",
         @"onInterstitialClosed",
         @"onInterstitialClicked",
+        @"onInterstitialImpression",
+        @"onInterstitialRevenuePaid",
+        // Rewarded events
         @"onRewardedLoaded",
         @"onRewardedFailedToLoad",
         @"onRewardedShown",
         @"onRewardedFailedToShow",
         @"onRewardedClosed",
         @"onRewardedClicked",
+        @"onRewardedImpression",
+        @"onRewardedRevenuePaid",
         @"onRewardEarned"
     ];
 }
@@ -225,9 +241,9 @@ RCT_EXPORT_METHOD(clearAllTargeting) {
     [[CloudXCore shared] clearAllKeyValues];
 }
 
-#pragma mark - Interstitial Methods
+#pragma mark - Banner Methods
 
-RCT_EXPORT_METHOD(createInterstitial:(NSString *)placement
+RCT_EXPORT_METHOD(createBanner:(NSDictionary *)config
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -236,25 +252,141 @@ RCT_EXPORT_METHOD(createInterstitial:(NSString *)placement
             return;
         }
 
+        NSString *placement = config[@"placement"];
+        NSString *adId = config[@"adId"];
+        
+        if (!placement || !adId) {
+            reject(@"INVALID_PARAMS", @"placement and adId are required", nil);
+            return;
+        }
+
+        id<CLXBanner> banner = [[CloudXCore shared] createBannerWithPlacement:placement
+                                                                       delegate:self];
+        if (banner) {
+            self.banners[adId] = banner;
+            resolve(@{@"success": @YES, @"adId": adId});
+        } else {
+            reject(@"CREATE_FAILED", @"Failed to create banner", nil);
+        }
+    });
+}
+
+RCT_EXPORT_METHOD(loadBanner:(NSDictionary *)config
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *adId = config[@"adId"];
+        id<CLXBanner> banner = self.banners[adId];
+        if (!banner) {
+            reject(@"NOT_FOUND", @"Banner not found. Create it first.", nil);
+            return;
+        }
+
+        [banner load];
+        resolve(@{@"success": @YES});
+    });
+}
+
+RCT_EXPORT_METHOD(showBanner:(NSDictionary *)config
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *adId = config[@"adId"];
+        id<CLXBanner> banner = self.banners[adId];
+        if (!banner) {
+            reject(@"NOT_FOUND", @"Banner not found", nil);
+            return;
+        }
+
+        [banner show];
+        resolve(@{@"success": @YES});
+    });
+}
+
+RCT_EXPORT_METHOD(hideBanner:(NSDictionary *)config
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *adId = config[@"adId"];
+        id<CLXBanner> banner = self.banners[adId];
+        if (!banner) {
+            reject(@"NOT_FOUND", @"Banner not found", nil);
+            return;
+        }
+
+        [banner hide];
+        resolve(@{@"success": @YES});
+    });
+}
+
+RCT_EXPORT_METHOD(startAutoRefresh:(NSDictionary *)config
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *adId = config[@"adId"];
+        id<CLXBanner> banner = self.banners[adId];
+        if (!banner) {
+            reject(@"NOT_FOUND", @"Banner not found", nil);
+            return;
+        }
+
+        [banner startAutoRefresh];
+        resolve(@{@"success": @YES});
+    });
+}
+
+RCT_EXPORT_METHOD(stopAutoRefresh:(NSDictionary *)config
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *adId = config[@"adId"];
+        id<CLXBanner> banner = self.banners[adId];
+        if (!banner) {
+            reject(@"NOT_FOUND", @"Banner not found", nil);
+            return;
+        }
+
+        [banner stopAutoRefresh];
+        resolve(@{@"success": @YES});
+    });
+}
+
+#pragma mark - Interstitial Methods
+
+RCT_EXPORT_METHOD(createInterstitial:(NSDictionary *)config
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (![[CloudXCore shared] isInitialized]) {
+            reject(@"NOT_INITIALIZED", @"SDK not initialized", nil);
+            return;
+        }
+
+        NSString *placement = config[@"placement"];
+        NSString *adId = config[@"adId"];
+        
+        if (!placement || !adId) {
+            reject(@"INVALID_PARAMS", @"placement and adId are required", nil);
+            return;
+        }
+
         id<CLXInterstitial> interstitial = [[CloudXCore shared] createInterstitialWithPlacement:placement
                                                                                         delegate:self];
         if (interstitial) {
-            self.interstitials[placement] = interstitial;
-            resolve(@{
-                @"success": @YES,
-                @"placement": placement
-            });
+            self.interstitials[adId] = interstitial;
+            resolve(@{@"success": @YES, @"adId": adId});
         } else {
             reject(@"CREATE_FAILED", @"Failed to create interstitial", nil);
         }
     });
 }
 
-RCT_EXPORT_METHOD(loadInterstitial:(NSString *)placement
+RCT_EXPORT_METHOD(loadInterstitial:(NSDictionary *)config
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        id<CLXInterstitial> interstitial = self.interstitials[placement];
+        NSString *adId = config[@"adId"];
+        id<CLXInterstitial> interstitial = self.interstitials[adId];
         if (!interstitial) {
             reject(@"NOT_FOUND", @"Interstitial not found. Create it first.", nil);
             return;
@@ -265,11 +397,12 @@ RCT_EXPORT_METHOD(loadInterstitial:(NSString *)placement
     });
 }
 
-RCT_EXPORT_METHOD(showInterstitial:(NSString *)placement
+RCT_EXPORT_METHOD(showInterstitial:(NSDictionary *)config
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        id<CLXInterstitial> interstitial = self.interstitials[placement];
+        NSString *adId = config[@"adId"];
+        id<CLXInterstitial> interstitial = self.interstitials[adId];
         if (!interstitial) {
             reject(@"NOT_FOUND", @"Interstitial not found. Create it first.", nil);
             return;
@@ -286,17 +419,18 @@ RCT_EXPORT_METHOD(showInterstitial:(NSString *)placement
     });
 }
 
-RCT_EXPORT_METHOD(isInterstitialReady:(NSString *)placement
+RCT_EXPORT_METHOD(isInterstitialReady:(NSDictionary *)config
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
-    id<CLXInterstitial> interstitial = self.interstitials[placement];
+    NSString *adId = config[@"adId"];
+    id<CLXInterstitial> interstitial = self.interstitials[adId];
     BOOL ready = interstitial ? [interstitial isReady] : NO;
     resolve(@(ready));
 }
 
 #pragma mark - Rewarded Methods
 
-RCT_EXPORT_METHOD(createRewarded:(NSString *)placement
+RCT_EXPORT_METHOD(createRewarded:(NSDictionary *)config
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -305,25 +439,31 @@ RCT_EXPORT_METHOD(createRewarded:(NSString *)placement
             return;
         }
 
+        NSString *placement = config[@"placement"];
+        NSString *adId = config[@"adId"];
+        
+        if (!placement || !adId) {
+            reject(@"INVALID_PARAMS", @"placement and adId are required", nil);
+            return;
+        }
+
         id<CLXRewarded> rewarded = [[CloudXCore shared] createRewardedWithPlacement:placement
                                                                             delegate:self];
         if (rewarded) {
-            self.rewardeds[placement] = rewarded;
-            resolve(@{
-                @"success": @YES,
-                @"placement": placement
-            });
+            self.rewardeds[adId] = rewarded;
+            resolve(@{@"success": @YES, @"adId": adId});
         } else {
             reject(@"CREATE_FAILED", @"Failed to create rewarded", nil);
         }
     });
 }
 
-RCT_EXPORT_METHOD(loadRewarded:(NSString *)placement
+RCT_EXPORT_METHOD(loadRewarded:(NSDictionary *)config
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        id<CLXRewarded> rewarded = self.rewardeds[placement];
+        NSString *adId = config[@"adId"];
+        id<CLXRewarded> rewarded = self.rewardeds[adId];
         if (!rewarded) {
             reject(@"NOT_FOUND", @"Rewarded not found. Create it first.", nil);
             return;
@@ -334,11 +474,12 @@ RCT_EXPORT_METHOD(loadRewarded:(NSString *)placement
     });
 }
 
-RCT_EXPORT_METHOD(showRewarded:(NSString *)placement
+RCT_EXPORT_METHOD(showRewarded:(NSDictionary *)config
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        id<CLXRewarded> rewarded = self.rewardeds[placement];
+        NSString *adId = config[@"adId"];
+        id<CLXRewarded> rewarded = self.rewardeds[adId];
         if (!rewarded) {
             reject(@"NOT_FOUND", @"Rewarded not found. Create it first.", nil);
             return;
@@ -355,94 +496,179 @@ RCT_EXPORT_METHOD(showRewarded:(NSString *)placement
     });
 }
 
+RCT_EXPORT_METHOD(isRewardedReady:(NSDictionary *)config
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    NSString *adId = config[@"adId"];
+    id<CLXRewarded> rewarded = self.rewardeds[adId];
+    BOOL ready = rewarded ? [rewarded isReady] : NO;
+    resolve(@(ready));
+}
+
+#pragma mark - Generic Ad Methods
+
+RCT_EXPORT_METHOD(destroyAd:(NSDictionary *)config
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *adId = config[@"adId"];
+        if (!adId) {
+            reject(@"INVALID_PARAMS", @"adId is required", nil);
+            return;
+        }
+
+        // Try to find and destroy in all ad type dictionaries
+        BOOL found = NO;
+        
+        if (self.banners[adId]) {
+            id<CLXBanner> banner = self.banners[adId];
+            [banner stopAutoRefresh];
+            [banner hide];
+            [self.banners removeObjectForKey:adId];
+            found = YES;
+        }
+        
+        if (self.interstitials[adId]) {
+            [self.interstitials removeObjectForKey:adId];
+            found = YES;
+        }
+        
+        if (self.rewardeds[adId]) {
+            [self.rewardeds removeObjectForKey:adId];
+            found = YES;
+        }
+
+        if (found) {
+            resolve(@{@"success": @YES});
+        } else {
+            reject(@"NOT_FOUND", @"Ad not found", nil);
+        }
+    });
+}
+
+#pragma mark - CLXBannerDelegate
+
+- (void)bannerDidLoad:(id<CLXBanner>)banner {
+    NSString *adId = [self getAdIdForBanner:banner];
+    [self sendEventWithName:@"onBannerLoaded" body:@{@"adId": adId ?: @""}];
+}
+
+- (void)banner:(id<CLXBanner>)banner didFailToLoadWithError:(NSError *)error {
+    NSString *adId = [self getAdIdForBanner:banner];
+    [self sendEventWithName:@"onBannerFailedToLoad"
+                       body:@{
+                           @"adId": adId ?: @"",
+                           @"error": error.localizedDescription ?: @""
+                       }];
+}
+
+- (void)bannerDidShow:(id<CLXBanner>)banner {
+    NSString *adId = [self getAdIdForBanner:banner];
+    [self sendEventWithName:@"onBannerShown" body:@{@"adId": adId ?: @""}];
+}
+
+- (void)bannerDidClick:(id<CLXBanner>)banner {
+    NSString *adId = [self getAdIdForBanner:banner];
+    [self sendEventWithName:@"onBannerClicked" body:@{@"adId": adId ?: @""}];
+}
+
 #pragma mark - CLXInterstitialDelegate
 
 - (void)interstitialDidLoad:(id<CLXInterstitial>)interstitial {
-    NSString *placement = [self getPlacementForInterstitial:interstitial];
-    [self sendEventWithName:@"onInterstitialLoaded" body:@{@"placement": placement ?: @""}];
+    NSString *adId = [self getAdIdForInterstitial:interstitial];
+    [self sendEventWithName:@"onInterstitialLoaded" body:@{@"adId": adId ?: @""}];
 }
 
 - (void)interstitial:(id<CLXInterstitial>)interstitial didFailToLoadWithError:(NSError *)error {
-    NSString *placement = [self getPlacementForInterstitial:interstitial];
+    NSString *adId = [self getAdIdForInterstitial:interstitial];
     [self sendEventWithName:@"onInterstitialFailedToLoad"
                        body:@{
-                           @"placement": placement ?: @"",
+                           @"adId": adId ?: @"",
                            @"error": error.localizedDescription ?: @""
                        }];
 }
 
 - (void)interstitialDidShow:(id<CLXInterstitial>)interstitial {
-    NSString *placement = [self getPlacementForInterstitial:interstitial];
-    [self sendEventWithName:@"onInterstitialShown" body:@{@"placement": placement ?: @""}];
+    NSString *adId = [self getAdIdForInterstitial:interstitial];
+    [self sendEventWithName:@"onInterstitialShown" body:@{@"adId": adId ?: @""}];
 }
 
 - (void)interstitial:(id<CLXInterstitial>)interstitial didFailToShowWithError:(NSError *)error {
-    NSString *placement = [self getPlacementForInterstitial:interstitial];
+    NSString *adId = [self getAdIdForInterstitial:interstitial];
     [self sendEventWithName:@"onInterstitialFailedToShow"
                        body:@{
-                           @"placement": placement ?: @"",
+                           @"adId": adId ?: @"",
                            @"error": error.localizedDescription ?: @""
                        }];
 }
 
 - (void)interstitialDidClose:(id<CLXInterstitial>)interstitial {
-    NSString *placement = [self getPlacementForInterstitial:interstitial];
-    [self sendEventWithName:@"onInterstitialClosed" body:@{@"placement": placement ?: @""}];
+    NSString *adId = [self getAdIdForInterstitial:interstitial];
+    [self sendEventWithName:@"onInterstitialClosed" body:@{@"adId": adId ?: @""}];
 }
 
 - (void)interstitialDidClick:(id<CLXInterstitial>)interstitial {
-    NSString *placement = [self getPlacementForInterstitial:interstitial];
-    [self sendEventWithName:@"onInterstitialClicked" body:@{@"placement": placement ?: @""}];
+    NSString *adId = [self getAdIdForInterstitial:interstitial];
+    [self sendEventWithName:@"onInterstitialClicked" body:@{@"adId": adId ?: @""}];
 }
 
 #pragma mark - CLXRewardedDelegate
 
 - (void)rewardedDidLoad:(id<CLXRewarded>)rewarded {
-    NSString *placement = [self getPlacementForRewarded:rewarded];
-    [self sendEventWithName:@"onRewardedLoaded" body:@{@"placement": placement ?: @""}];
+    NSString *adId = [self getAdIdForRewarded:rewarded];
+    [self sendEventWithName:@"onRewardedLoaded" body:@{@"adId": adId ?: @""}];
 }
 
 - (void)rewarded:(id<CLXRewarded>)rewarded didFailToLoadWithError:(NSError *)error {
-    NSString *placement = [self getPlacementForRewarded:rewarded];
+    NSString *adId = [self getAdIdForRewarded:rewarded];
     [self sendEventWithName:@"onRewardedFailedToLoad"
                        body:@{
-                           @"placement": placement ?: @"",
+                           @"adId": adId ?: @"",
                            @"error": error.localizedDescription ?: @""
                        }];
 }
 
 - (void)rewardedDidShow:(id<CLXRewarded>)rewarded {
-    NSString *placement = [self getPlacementForRewarded:rewarded];
-    [self sendEventWithName:@"onRewardedShown" body:@{@"placement": placement ?: @""}];
+    NSString *adId = [self getAdIdForRewarded:rewarded];
+    [self sendEventWithName:@"onRewardedShown" body:@{@"adId": adId ?: @""}];
 }
 
 - (void)rewarded:(id<CLXRewarded>)rewarded didFailToShowWithError:(NSError *)error {
-    NSString *placement = [self getPlacementForRewarded:rewarded];
+    NSString *adId = [self getAdIdForRewarded:rewarded];
     [self sendEventWithName:@"onRewardedFailedToShow"
                        body:@{
-                           @"placement": placement ?: @"",
+                           @"adId": adId ?: @"",
                            @"error": error.localizedDescription ?: @""
                        }];
 }
 
 - (void)rewardedDidClose:(id<CLXRewarded>)rewarded {
-    NSString *placement = [self getPlacementForRewarded:rewarded];
-    [self sendEventWithName:@"onRewardedClosed" body:@{@"placement": placement ?: @""}];
+    NSString *adId = [self getAdIdForRewarded:rewarded];
+    [self sendEventWithName:@"onRewardedClosed" body:@{@"adId": adId ?: @""}];
 }
 
 - (void)rewardedDidClick:(id<CLXRewarded>)rewarded {
-    NSString *placement = [self getPlacementForRewarded:rewarded];
-    [self sendEventWithName:@"onRewardedClicked" body:@{@"placement": placement ?: @""}];
+    NSString *adId = [self getAdIdForRewarded:rewarded];
+    [self sendEventWithName:@"onRewardedClicked" body:@{@"adId": adId ?: @""}];
 }
 
 - (void)rewardedDidEarnReward:(id<CLXRewarded>)rewarded {
-    NSString *placement = [self getPlacementForRewarded:rewarded];
-    [self sendEventWithName:@"onRewardEarned" body:@{@"placement": placement ?: @""}];
+    NSString *adId = [self getAdIdForRewarded:rewarded];
+    [self sendEventWithName:@"onRewardEarned" body:@{@"adId": adId ?: @""}];
 }
 
 #pragma mark - Helper Methods
 
-- (NSString *)getPlacementForInterstitial:(id<CLXInterstitial>)interstitial {
+- (NSString *)getAdIdForBanner:(id<CLXBanner>)banner {
+    for (NSString *key in self.banners) {
+        if (self.banners[key] == banner) {
+            return key;
+        }
+    }
+    return nil;
+}
+
+- (NSString *)getAdIdForInterstitial:(id<CLXInterstitial>)interstitial {
     for (NSString *key in self.interstitials) {
         if (self.interstitials[key] == interstitial) {
             return key;
@@ -451,7 +677,7 @@ RCT_EXPORT_METHOD(showRewarded:(NSString *)placement
     return nil;
 }
 
-- (NSString *)getPlacementForRewarded:(id<CLXRewarded>)rewarded {
+- (NSString *)getAdIdForRewarded:(id<CLXRewarded>)rewarded {
     for (NSString *key in self.rewardeds) {
         if (self.rewardeds[key] == rewarded) {
             return key;
