@@ -44,10 +44,22 @@ RCT_EXPORT_MODULE(CloudXSDK);
 
 #pragma mark - SDK Initialization
 
-RCT_EXPORT_METHOD(initSDK:(NSString *)appKey
+RCT_EXPORT_METHOD(initSDK:(NSDictionary *)config
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *appKey = config[@"appKey"];
+        NSString *hashedUserID = config[@"hashedUserID"];
+        
+        if (!appKey) {
+            reject(@"INVALID_PARAMS", @"appKey is required", nil);
+            return;
+        }
+        
+        if (hashedUserID) {
+            [[CloudXCore shared] provideUserDetailsWithHashedUserID:hashedUserID];
+        }
+        
         [[CloudXCore shared] initSDKWithAppKey:appKey completion:^(BOOL success, NSError * _Nullable error) {
             if (success) {
                 RCTLogInfo(@"CloudX SDK initialized successfully");
@@ -71,22 +83,95 @@ RCT_EXPORT_METHOD(isInitialized:(RCTPromiseResolveBlock)resolve
     resolve(@(initialized));
 }
 
+RCT_EXPORT_METHOD(getVersion:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    NSString *version = [[CloudXCore shared] getSDKVersion];
+    resolve(version ?: @"Unknown");
+}
+
+RCT_EXPORT_METHOD(setLoggingEnabled:(BOOL)enabled) {
+    [[CloudXCore shared] setVerboseLogging:enabled];
+}
+
+RCT_EXPORT_METHOD(setEnvironment:(NSString *)environment) {
+    [[CloudXCore shared] setEnvironment:environment];
+}
+
 #pragma mark - Privacy Methods
 
+// CCPA
+RCT_EXPORT_METHOD(setCCPAPrivacyString:(NSString *)ccpaString) {
+    [[CloudXCore shared] setCCPAPrivacyString:ccpaString];
+}
+
+RCT_EXPORT_METHOD(getCCPAPrivacyString:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    NSString *ccpaString = [[CloudXCore shared] getCCPAPrivacyString];
+    resolve(ccpaString ?: [NSNull null]);
+}
+
+RCT_EXPORT_METHOD(setIsDoNotSell:(BOOL)doNotSell) {
+    [[CloudXCore shared] setIsDoNotSell:doNotSell];
+}
+
+// GPP (Global Privacy Platform)
+RCT_EXPORT_METHOD(setGPPString:(NSString *)gppString) {
+    [[CloudXCore shared] setGPPString:gppString];
+}
+
+RCT_EXPORT_METHOD(getGPPString:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    NSString *gppString = [[CloudXCore shared] getGPPString];
+    resolve(gppString ?: [NSNull null]);
+}
+
+RCT_EXPORT_METHOD(setGPPSectionIds:(NSArray<NSNumber *> *)sectionIds) {
+    [[CloudXCore shared] setGPPSid:sectionIds];
+}
+
+RCT_EXPORT_METHOD(getGPPSectionIds:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    NSArray *sectionIds = [[CloudXCore shared] getGPPSid];
+    resolve(sectionIds ?: [NSNull null]);
+}
+
+// GDPR
+RCT_EXPORT_METHOD(setIsUserConsent:(BOOL)hasConsent) {
+    [[CloudXCore shared] setIsUserConsent:hasConsent];
+}
+
+RCT_EXPORT_METHOD(getIsUserConsent:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    BOOL hasConsent = [[CloudXCore shared] getIsUserConsent];
+    resolve(@(hasConsent));
+}
+
+// COPPA
+RCT_EXPORT_METHOD(setIsAgeRestrictedUser:(BOOL)isAgeRestricted) {
+    [[CloudXCore shared] setIsAgeRestrictedUser:isAgeRestricted];
+}
+
+RCT_EXPORT_METHOD(getIsAgeRestrictedUser:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    BOOL isAgeRestricted = [[CloudXCore shared] getIsAgeRestrictedUser];
+    resolve(@(isAgeRestricted));
+}
+
+// Legacy methods (deprecated but kept for backwards compatibility)
 RCT_EXPORT_METHOD(setPrivacyConsent:(BOOL)consent) {
-    [[CloudXCore shared] setPrivacyConsent:consent];
+    [[CloudXCore shared] setIsUserConsent:consent];
 }
 
 RCT_EXPORT_METHOD(setDoNotSell:(BOOL)doNotSell) {
-    [[CloudXCore shared] setDoNotSell:doNotSell];
+    [[CloudXCore shared] setIsDoNotSell:doNotSell];
 }
 
 RCT_EXPORT_METHOD(setCOPPAApplies:(BOOL)coppaApplies) {
-    [[CloudXCore shared] setCOPPAApplies:coppaApplies];
+    [[CloudXCore shared] setIsAgeRestrictedUser:coppaApplies];
 }
 
 RCT_EXPORT_METHOD(setGDPRApplies:(BOOL)gdprApplies) {
-    [[CloudXCore shared] setGDPRApplies:gdprApplies];
+    [[CloudXCore shared] setIsUserConsent:gdprApplies];
 }
 
 #pragma mark - Interstitial Methods

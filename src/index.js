@@ -16,33 +16,119 @@ class CloudX {
   }
 
   // SDK Initialization
-  async initialize(appKey) {
+  async initialize(config) {
     if (Platform.OS !== 'ios') {
       console.warn('CloudX SDK currently only supports iOS');
       return Promise.resolve({ success: false, message: 'Only iOS supported' });
     }
-    return CloudXSDK.initSDK(appKey);
+    
+    // Support both string and object formats for backwards compatibility
+    const initConfig = typeof config === 'string' 
+      ? { appKey: config }
+      : config;
+    
+    return CloudXSDK.initSDK(initConfig);
   }
 
   async isInitialized() {
     return CloudXSDK.isInitialized();
   }
 
-  // Privacy Methods
+  async getVersion() {
+    if (Platform.OS !== 'ios') {
+      return 'Unknown';
+    }
+    return CloudXSDK.getVersion();
+  }
+
+  async setLoggingEnabled(enabled) {
+    if (Platform.OS !== 'ios') {
+      return;
+    }
+    return CloudXSDK.setLoggingEnabled(enabled);
+  }
+
+  async setEnvironment(environment) {
+    if (Platform.OS !== 'ios') {
+      return;
+    }
+    return CloudXSDK.setEnvironment(environment);
+  }
+
+  // Privacy Methods - CCPA
+  async setCCPAPrivacyString(ccpaString) {
+    if (Platform.OS !== 'ios') return;
+    return CloudXSDK.setCCPAPrivacyString(ccpaString);
+  }
+
+  async getCCPAPrivacyString() {
+    if (Platform.OS !== 'ios') return null;
+    return CloudXSDK.getCCPAPrivacyString();
+  }
+
+  async setIsDoNotSell(doNotSell) {
+    if (Platform.OS !== 'ios') return;
+    return CloudXSDK.setIsDoNotSell(doNotSell);
+  }
+
+  // Privacy Methods - GPP
+  async setGPPString(gppString) {
+    if (Platform.OS !== 'ios') return;
+    return CloudXSDK.setGPPString(gppString);
+  }
+
+  async getGPPString() {
+    if (Platform.OS !== 'ios') return null;
+    return CloudXSDK.getGPPString();
+  }
+
+  async setGPPSectionIds(sectionIds) {
+    if (Platform.OS !== 'ios') return;
+    return CloudXSDK.setGPPSectionIds(sectionIds);
+  }
+
+  async getGPPSectionIds() {
+    if (Platform.OS !== 'ios') return null;
+    return CloudXSDK.getGPPSectionIds();
+  }
+
+  // Privacy Methods - GDPR
+  async setIsUserConsent(hasConsent) {
+    if (Platform.OS !== 'ios') return;
+    return CloudXSDK.setIsUserConsent(hasConsent);
+  }
+
+  async getIsUserConsent() {
+    if (Platform.OS !== 'ios') return false;
+    return CloudXSDK.getIsUserConsent();
+  }
+
+  // Privacy Methods - COPPA
+  async setIsAgeRestrictedUser(isAgeRestricted) {
+    if (Platform.OS !== 'ios') return;
+    return CloudXSDK.setIsAgeRestrictedUser(isAgeRestricted);
+  }
+
+  async getIsAgeRestrictedUser() {
+    if (Platform.OS !== 'ios') return false;
+    return CloudXSDK.getIsAgeRestrictedUser();
+  }
+
+  // Legacy privacy methods (deprecated)
   setPrivacyConsent(consent) {
-    CloudXSDK.setPrivacyConsent(consent);
+    this.setIsUserConsent(consent);
   }
 
   setDoNotSell(doNotSell) {
-    CloudXSDK.setDoNotSell(doNotSell);
+    this.setIsDoNotSell(doNotSell);
   }
 
   setCOPPAApplies(coppaApplies) {
-    CloudXSDK.setCOPPAApplies(coppaApplies);
+    this.setIsAgeRestrictedUser(coppaApplies);
   }
 
   setGDPRApplies(gdprApplies) {
-    CloudXSDK.setGDPRApplies(gdprApplies);
+    this.setIsUserConsent(gdprApplies);
   }
 
   // Interstitial Management
