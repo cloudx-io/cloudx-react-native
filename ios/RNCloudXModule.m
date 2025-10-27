@@ -174,6 +174,57 @@ RCT_EXPORT_METHOD(setGDPRApplies:(BOOL)gdprApplies) {
     [[CloudXCore shared] setIsUserConsent:gdprApplies];
 }
 
+#pragma mark - User Targeting Methods
+
+// User ID
+RCT_EXPORT_METHOD(setHashedUserID:(NSString *)hashedUserID) {
+    [[CloudXCore shared] provideUserDetailsWithHashedUserID:hashedUserID];
+}
+
+RCT_EXPORT_METHOD(getUserID:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    NSString *userID = [[CloudXCore shared] userID];
+    resolve(userID ?: [NSNull null]);
+}
+
+RCT_EXPORT_METHOD(setUserID:(NSString *)userID) {
+    [[CloudXCore shared] setUserID:userID];
+}
+
+// Generic key-value targeting
+RCT_EXPORT_METHOD(setTargetingKeyValue:(NSString *)key
+                  value:(NSString *)value) {
+    [[CloudXCore shared] useHashedKeyValue:key value:value];
+}
+
+RCT_EXPORT_METHOD(setTargetingKeyValues:(NSDictionary *)keyValues) {
+    [[CloudXCore shared] useKeyValues:keyValues];
+}
+
+// User-level targeting (privacy-sensitive)
+RCT_EXPORT_METHOD(setUserKeyValue:(NSString *)key
+                  value:(NSString *)value) {
+    [[CloudXCore shared] setUserKeyValue:key value:value];
+}
+
+// App-level targeting (persistent)
+RCT_EXPORT_METHOD(setAppKeyValue:(NSString *)key
+                  value:(NSString *)value) {
+    [[CloudXCore shared] setAppKeyValue:key value:value];
+}
+
+// Bidder-specific targeting
+RCT_EXPORT_METHOD(setBidderKeyValue:(NSString *)bidder
+                  key:(NSString *)key
+                  value:(NSString *)value) {
+    [[CloudXCore shared] useBidderKeyValue:bidder key:key value:value];
+}
+
+// Clear all targeting
+RCT_EXPORT_METHOD(clearAllTargeting) {
+    [[CloudXCore shared] clearAllKeyValues];
+}
+
 #pragma mark - Interstitial Methods
 
 RCT_EXPORT_METHOD(createInterstitial:(NSString *)placement

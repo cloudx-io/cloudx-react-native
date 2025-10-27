@@ -131,6 +131,57 @@ class CloudX {
     this.setIsUserConsent(gdprApplies);
   }
 
+  // User Targeting - User ID
+  async setHashedUserID(hashedUserID) {
+    if (Platform.OS !== 'ios') return;
+    return CloudXSDK.setHashedUserID(hashedUserID);
+  }
+
+  async getUserID() {
+    if (Platform.OS !== 'ios') return null;
+    return CloudXSDK.getUserID();
+  }
+
+  async setUserID(userID) {
+    if (Platform.OS !== 'ios') return;
+    return CloudXSDK.setUserID(userID);
+  }
+
+  // User Targeting - Generic key-values
+  async setTargetingKeyValue(key, value) {
+    if (Platform.OS !== 'ios') return;
+    return CloudXSDK.setTargetingKeyValue(key, value);
+  }
+
+  async setTargetingKeyValues(keyValues) {
+    if (Platform.OS !== 'ios') return;
+    return CloudXSDK.setTargetingKeyValues(keyValues);
+  }
+
+  // User Targeting - User-level (privacy-sensitive)
+  async setUserKeyValue(key, value) {
+    if (Platform.OS !== 'ios') return;
+    return CloudXSDK.setUserKeyValue(key, value);
+  }
+
+  // User Targeting - App-level (persistent)
+  async setAppKeyValue(key, value) {
+    if (Platform.OS !== 'ios') return;
+    return CloudXSDK.setAppKeyValue(key, value);
+  }
+
+  // User Targeting - Bidder-specific
+  async setBidderKeyValue(bidder, key, value) {
+    if (Platform.OS !== 'ios') return;
+    return CloudXSDK.setBidderKeyValue(bidder, key, value);
+  }
+
+  // User Targeting - Clear all
+  async clearAllTargeting() {
+    if (Platform.OS !== 'ios') return;
+    return CloudXSDK.clearAllTargeting();
+  }
+
   // Interstitial Management
   async createInterstitial(placement) {
     return CloudXSDK.createInterstitial(placement);

@@ -78,6 +78,27 @@ declare class CloudX {
   setCOPPAApplies(coppaApplies: boolean): void;
   setGDPRApplies(gdprApplies: boolean): void;
 
+  // User Targeting - User ID
+  setHashedUserID(hashedUserID: string): Promise<void>;
+  getUserID(): Promise<string | null>;
+  setUserID(userID: string | null): Promise<void>;
+
+  // User Targeting - Generic key-values
+  setTargetingKeyValue(key: string, value: string): Promise<void>;
+  setTargetingKeyValues(keyValues: Record<string, string>): Promise<void>;
+
+  // User Targeting - User-level (privacy-sensitive)
+  setUserKeyValue(key: string, value: string): Promise<void>;
+
+  // User Targeting - App-level (persistent)
+  setAppKeyValue(key: string, value: string): Promise<void>;
+
+  // User Targeting - Bidder-specific
+  setBidderKeyValue(bidder: string, key: string, value: string): Promise<void>;
+
+  // User Targeting - Clear all
+  clearAllTargeting(): Promise<void>;
+
   // Interstitial Management
   createInterstitial(placement: string): Promise<{ success: boolean; placement: string }>;
   loadInterstitial(placement: string): Promise<{ success: boolean }>;
