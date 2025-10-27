@@ -188,4 +188,15 @@ export const BannerSizes: {
 
 export const CloudXBannerView: React.FC<CloudXBannerProps>;
 
+// React Hooks
+export {
+  useCloudXInterstitial,
+  useCloudXRewarded,
+  useCloudXBanner,
+  CloudXInterstitialHook,
+  CloudXRewardedHook,
+  CloudXBannerHook,
+  CloudXBannerHookOptions,
+} from './hooks';
+
 export default CloudXSDKManager;
