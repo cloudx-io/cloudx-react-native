@@ -18,11 +18,12 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { CloudXSDKManager } from 'cloudx-react-native';
 import { DemoConfig, DemoEnvironmentConfig } from './src/config/DemoConfig';
 
-// Import screens (will create these next)
+// Import screens
 import BannerScreen from './src/screens/BannerScreen';
 import MRECScreen from './src/screens/MRECScreen';
 import InterstitialScreen from './src/screens/InterstitialScreen';
 import RewardedScreen from './src/screens/RewardedScreen';
+import LogsScreen from './src/screens/LogsScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -256,26 +257,26 @@ interface MainTabViewProps {
 }
 
 function MainTabView({ environment }: MainTabViewProps): React.JSX.Element {
+  const [logsVisible, setLogsVisible] = React.useState(false);
+
   return (
-    <Tab.Navigator
-      screenOptions={{
-        tabBarActiveTintColor: '#2196F3',
-        tabBarInactiveTintColor: '#757575',
-        tabBarStyle: {
-          borderTopWidth: 1,
-          borderTopColor: '#E0E0E0',
-        },
-        headerRight: () => (
-          <TouchableOpacity
-            style={styles.logsButton}
-            onPress={() => {
-              // TODO: Navigate to logs screen
-              console.log('Show logs');
-            }}>
-            <Text style={styles.logsButtonText}>📋 Logs</Text>
-          </TouchableOpacity>
-        ),
-      }}>
+    <>
+      <Tab.Navigator
+        screenOptions={{
+          tabBarActiveTintColor: '#2196F3',
+          tabBarInactiveTintColor: '#757575',
+          tabBarStyle: {
+            borderTopWidth: 1,
+            borderTopColor: '#E0E0E0',
+          },
+          headerRight: () => (
+            <TouchableOpacity
+              style={styles.logsButton}
+              onPress={() => setLogsVisible(true)}>
+              <Text style={styles.logsButtonText}>📋 Logs</Text>
+            </TouchableOpacity>
+          ),
+        }}>
       <Tab.Screen
         name="Banner"
         options={{ tabBarIcon: () => <Text>📱</Text> }}>
@@ -296,7 +297,14 @@ function MainTabView({ environment }: MainTabViewProps): React.JSX.Element {
         options={{ tabBarIcon: () => <Text>🎁</Text> }}>
         {() => <RewardedScreen environment={environment} />}
       </Tab.Screen>
-    </Tab.Navigator>
+      </Tab.Navigator>
+
+      {/* Logs Modal */}
+      <LogsScreen
+        visible={logsVisible}
+        onClose={() => setLogsVisible(false)}
+      />
+    </>
   );
 }
 
