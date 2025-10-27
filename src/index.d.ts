@@ -15,14 +15,55 @@ export interface CloudXInitConfig {
   hashedUserID?: string;
 }
 
+// CloudX Ad object (revenue, network info, etc.)
+export interface CloudXAd {
+  adId: string;
+  placement: string;
+  network?: string;
+  revenue?: number;
+  revenuePrecision?: string;
+  currency?: string;
+  creativeId?: string;
+  adUnitId?: string;
+  countryCode?: string;
+  dspName?: string;
+}
+
+// Base ad event
 export interface CloudXAdEvent {
   adId: string;
   error?: string;
+  ad?: CloudXAd; // Enhanced payload (when CloudXCore provides it)
 }
 
+// Ad configuration for create methods
 export interface CloudXAdConfig {
   placement: string;
   adId: string;
+}
+
+// Reward information
+export interface CloudXReward {
+  type: string;
+  amount: number;
+}
+
+// Rewarded ad event with reward info
+export interface CloudXRewardedAdEvent extends CloudXAdEvent {
+  reward?: CloudXReward;
+}
+
+// Native ad asset types
+export interface CloudXNativeAdAssets {
+  title?: string;
+  body?: string;
+  callToAction?: string;
+  iconUrl?: string;
+  imageUrl?: string;
+  starRating?: number;
+  advertiser?: string;
+  price?: string;
+  store?: string;
 }
 
 export interface CloudXBannerProps extends ViewProps {
@@ -140,9 +181,15 @@ declare class CloudX {
   destroyAd(config: { adId: string }): Promise<{ success: boolean }>;
 
   // Event Management
-  addEventListener(eventType: CloudXEventType, handler: (event: CloudXAdEvent) => void): EmitterSubscription;
+  addEventListener(eventType: CloudXEventType, handler: (event: CloudXAdEvent | CloudXRewardedAdEvent) => void): EmitterSubscription;
   removeEventListener(eventType: CloudXEventType, handler: (event: CloudXAdEvent) => void): void;
   removeAllEventListeners(eventType?: CloudXEventType): void;
+  
+  // Native Ads (Future - not yet implemented)
+  // createNative(config: CloudXAdConfig): Promise<{ success: boolean; adId: string }>;
+  // loadNative(config: { adId: string }): Promise<{ success: boolean }>;
+  // showNative(config: { adId: string }): Promise<{ success: boolean }>;
+  // getNativeAdAssets(config: { adId: string }): Promise<CloudXNativeAdAssets | null>;
 
   // Convenience event methods
   onInterstitialLoaded(placement: string, handler: (event: CloudXAdEvent) => void): EmitterSubscription;
