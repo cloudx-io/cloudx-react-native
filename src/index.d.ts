@@ -246,4 +246,7 @@ export {
   CloudXBannerHookOptions,
 } from './hooks';
 
+// Banner View Component
+export { CloudXBannerView } from './CloudXBannerView';
+
 export default CloudXSDKManager;

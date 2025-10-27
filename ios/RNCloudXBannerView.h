@@ -1,26 +1,21 @@
 //
 //  RNCloudXBannerView.h
-//  react-native-cloudx-sdk
+//  cloudx-react-native
 //
 
-#import <React/RCTViewManager.h>
+#import <React/RCTView.h>
 #import <CloudXCore/CloudXCore.h>
 
-@interface RNCloudXBannerView : UIView <CLXBannerDelegate>
+@interface RNCloudXBannerView : RCTView <CLXBannerDelegate>
 
-@property (nonatomic, strong) id<CLXBanner> banner;
 @property (nonatomic, copy) NSString *placement;
+@property (nonatomic, copy) NSString *adId;
 @property (nonatomic, copy) NSString *bannerSize;
-@property (nonatomic, copy) RCTBubblingEventBlock onAdLoaded;
-@property (nonatomic, copy) RCTBubblingEventBlock onAdFailedToLoad;
-@property (nonatomic, copy) RCTBubblingEventBlock onAdClicked;
-@property (nonatomic, copy) RCTBubblingEventBlock onAdOpened;
-@property (nonatomic, copy) RCTBubblingEventBlock onAdClosed;
 
-- (void)loadAd;
-- (void)destroy;
+@property (nonatomic, copy) RCTDirectEventBlock onAdLoaded;
+@property (nonatomic, copy) RCTDirectEventBlock onAdFailedToLoad;
+@property (nonatomic, copy) RCTDirectEventBlock onAdShown;
+@property (nonatomic, copy) RCTDirectEventBlock onAdClicked;
+@property (nonatomic, copy) RCTDirectEventBlock onAdHidden;
 
-@end
-
-@interface RNCloudXBannerViewManager : RCTViewManager
 @end

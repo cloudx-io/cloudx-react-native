@@ -321,6 +321,9 @@ export const CloudXSDKManager = new CloudX();
 // Export React Hooks
 export { useCloudXInterstitial, useCloudXRewarded, useCloudXBanner } from './hooks';
 
+// Export Banner View Component
+export { CloudXBannerView } from './CloudXBannerView';
+
 // Export event types
 export const CloudXEventTypes = {
   // Banner events
