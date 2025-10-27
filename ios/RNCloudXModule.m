@@ -262,10 +262,8 @@ RCT_EXPORT_METHOD(createBanner:(NSDictionary *)config
             return;
         }
 
-        CLXBannerAdView *banner = [[CloudXCore shared] createBannerWithPlacement:placement
-                                                                   viewController:nil
-                                                                         delegate:self
-                                                                             tmax:nil];
+        id<CLXBanner> banner = [[CloudXCore shared] createBannerWithPlacement:placement
+                                                                     delegate:self];
         if (banner) {
             self.banners[adId] = banner;
             [self.adInstanceToAdId setObject:adId forKey:banner];
@@ -281,7 +279,7 @@ RCT_EXPORT_METHOD(loadBanner:(NSDictionary *)config
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *adId = config[@"adId"];
-        CLXBannerAdView *banner = self.banners[adId];
+        id<CLXBanner> banner = self.banners[adId];
         if (!banner) {
             reject(@"NOT_FOUND", @"Banner not found. Create it first.", nil);
             return;
@@ -297,7 +295,7 @@ RCT_EXPORT_METHOD(showBanner:(NSDictionary *)config
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *adId = config[@"adId"];
-        CLXBannerAdView *banner = self.banners[adId];
+        id<CLXBanner> banner = self.banners[adId];
         if (!banner) {
             reject(@"NOT_FOUND", @"Banner not found", nil);
             return;
@@ -313,7 +311,7 @@ RCT_EXPORT_METHOD(hideBanner:(NSDictionary *)config
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *adId = config[@"adId"];
-        CLXBannerAdView *banner = self.banners[adId];
+        id<CLXBanner> banner = self.banners[adId];
         if (!banner) {
             reject(@"NOT_FOUND", @"Banner not found", nil);
             return;
@@ -329,7 +327,7 @@ RCT_EXPORT_METHOD(startAutoRefresh:(NSDictionary *)config
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *adId = config[@"adId"];
-        CLXBannerAdView *banner = self.banners[adId];
+        id<CLXBanner> banner = self.banners[adId];
         if (!banner) {
             reject(@"NOT_FOUND", @"Banner not found", nil);
             return;
@@ -345,7 +343,7 @@ RCT_EXPORT_METHOD(stopAutoRefresh:(NSDictionary *)config
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *adId = config[@"adId"];
-        CLXBannerAdView *banner = self.banners[adId];
+        id<CLXBanner> banner = self.banners[adId];
         if (!banner) {
             reject(@"NOT_FOUND", @"Banner not found", nil);
             return;
@@ -375,8 +373,8 @@ RCT_EXPORT_METHOD(createInterstitial:(NSDictionary *)config
             return;
         }
 
-        CLXPublisherFullscreenAd *interstitial = [[CloudXCore shared] createInterstitialWithPlacement:placement
-                                                                                          delegate:self];
+        id<CLXInterstitial> interstitial = [[CloudXCore shared] createInterstitialWithPlacement:placement
+                                                                                        delegate:self];
         if (interstitial) {
             self.interstitials[adId] = interstitial;
             [self.adInstanceToAdId setObject:adId forKey:interstitial];
@@ -392,7 +390,7 @@ RCT_EXPORT_METHOD(loadInterstitial:(NSDictionary *)config
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *adId = config[@"adId"];
-        CLXPublisherFullscreenAd *interstitial = self.interstitials[adId];
+        id<CLXInterstitial> interstitial = self.interstitials[adId];
         if (!interstitial) {
             reject(@"NOT_FOUND", @"Interstitial not found. Create it first.", nil);
             return;
@@ -408,7 +406,7 @@ RCT_EXPORT_METHOD(showInterstitial:(NSDictionary *)config
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *adId = config[@"adId"];
-        CLXPublisherFullscreenAd *interstitial = self.interstitials[adId];
+        id<CLXInterstitial> interstitial = self.interstitials[adId];
         if (!interstitial) {
             reject(@"NOT_FOUND", @"Interstitial not found. Create it first.", nil);
             return;
@@ -429,7 +427,7 @@ RCT_EXPORT_METHOD(isInterstitialReady:(NSDictionary *)config
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
     NSString *adId = config[@"adId"];
-    CLXPublisherFullscreenAd *interstitial = self.interstitials[adId];
+    id<CLXInterstitial> interstitial = self.interstitials[adId];
     BOOL ready = interstitial ? [interstitial isReady] : NO;
     resolve(@(ready));
 }
@@ -453,8 +451,8 @@ RCT_EXPORT_METHOD(createRewarded:(NSDictionary *)config
             return;
         }
 
-        CLXPublisherFullscreenAd *rewarded = [[CloudXCore shared] createRewardedWithPlacement:placement
-                                                                                    delegate:self];
+        id<CLXRewarded> rewarded = [[CloudXCore shared] createRewardedWithPlacement:placement
+                                                                           delegate:self];
         if (rewarded) {
             self.rewardeds[adId] = rewarded;
             [self.adInstanceToAdId setObject:adId forKey:rewarded];
@@ -470,7 +468,7 @@ RCT_EXPORT_METHOD(loadRewarded:(NSDictionary *)config
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *adId = config[@"adId"];
-        CLXPublisherFullscreenAd *rewarded = self.rewardeds[adId];
+        id<CLXRewarded> rewarded = self.rewardeds[adId];
         if (!rewarded) {
             reject(@"NOT_FOUND", @"Rewarded not found. Create it first.", nil);
             return;
@@ -486,7 +484,7 @@ RCT_EXPORT_METHOD(showRewarded:(NSDictionary *)config
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *adId = config[@"adId"];
-        CLXPublisherFullscreenAd *rewarded = self.rewardeds[adId];
+        id<CLXRewarded> rewarded = self.rewardeds[adId];
         if (!rewarded) {
             reject(@"NOT_FOUND", @"Rewarded not found. Create it first.", nil);
             return;
@@ -507,7 +505,7 @@ RCT_EXPORT_METHOD(isRewardedReady:(NSDictionary *)config
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
     NSString *adId = config[@"adId"];
-    CLXPublisherFullscreenAd *rewarded = self.rewardeds[adId];
+    id<CLXRewarded> rewarded = self.rewardeds[adId];
     BOOL ready = rewarded ? [rewarded isReady] : NO;
     resolve(@(ready));
 }
@@ -528,7 +526,7 @@ RCT_EXPORT_METHOD(destroyAd:(NSDictionary *)config
         BOOL found = NO;
         
         if (self.banners[adId]) {
-            CLXBannerAdView *banner = self.banners[adId];
+            id<CLXBanner> banner = self.banners[adId];
             [banner stopAutoRefresh];
             [banner hide];
             [self.banners removeObjectForKey:adId];
@@ -772,7 +770,7 @@ RCT_EXPORT_METHOD(destroyAd:(NSDictionary *)config
 
 #pragma mark - Helper Methods
 
-- (NSString *)getAdIdForBanner:(CLXBannerAdView *)banner {
+- (NSString *)getAdIdForBanner:(id<CLXBanner>)banner {
     for (NSString *key in self.banners) {
         if (self.banners[key] == banner) {
             return key;
@@ -781,7 +779,7 @@ RCT_EXPORT_METHOD(destroyAd:(NSDictionary *)config
     return nil;
 }
 
-- (NSString *)getAdIdForInterstitial:(CLXPublisherFullscreenAd *)interstitial {
+- (NSString *)getAdIdForInterstitial:(id<CLXInterstitial>)interstitial {
     for (NSString *key in self.interstitials) {
         if (self.interstitials[key] == interstitial) {
             return key;
@@ -790,7 +788,7 @@ RCT_EXPORT_METHOD(destroyAd:(NSDictionary *)config
     return nil;
 }
 
-- (NSString *)getAdIdForRewarded:(CLXPublisherFullscreenAd *)rewarded {
+- (NSString *)getAdIdForRewarded:(id<CLXRewarded>)rewarded {
     for (NSString *key in self.rewardeds) {
         if (self.rewardeds[key] == rewarded) {
             return key;
@@ -808,13 +806,14 @@ RCT_EXPORT_METHOD(destroyAd:(NSDictionary *)config
         id adInstance = dict[adId];
         NSString *storedAdId = [self.adInstanceToAdId objectForKey:adInstance];
         if ([storedAdId isEqualToString:adId]) {
+            // For now, match by placement name (assumes one ad per placement)
+            // TODO: Better matching if CloudXCore provides instance reference
             return adId;
         }
     }
     
-    // Fallback: For backward compatibility, return first adId if only one ad exists
-    // This handles cases where ad tracking might fail but single ad per placement is used
-    return dict.count == 1 ? dict.allKeys.firstObject : nil;
+    // Fallback: return any adId (for single ad case)
+    return dict.allKeys.firstObject;
 }
 
 // Helper to convert CLXAd to dictionary
