@@ -16,8 +16,13 @@ export interface CloudXInitConfig {
 }
 
 export interface CloudXAdEvent {
-  placement: string;
+  adId: string;
   error?: string;
+}
+
+export interface CloudXAdConfig {
+  placement: string;
+  adId: string;
 }
 
 export interface CloudXBannerProps extends ViewProps {
@@ -31,18 +36,30 @@ export interface CloudXBannerProps extends ViewProps {
 }
 
 export type CloudXEventType =
+  | 'onBannerLoaded'
+  | 'onBannerFailedToLoad'
+  | 'onBannerShown'
+  | 'onBannerFailedToShow'
+  | 'onBannerHidden'
+  | 'onBannerClicked'
+  | 'onBannerImpression'
+  | 'onBannerRevenuePaid'
   | 'onInterstitialLoaded'
   | 'onInterstitialFailedToLoad'
   | 'onInterstitialShown'
   | 'onInterstitialFailedToShow'
   | 'onInterstitialClosed'
   | 'onInterstitialClicked'
+  | 'onInterstitialImpression'
+  | 'onInterstitialRevenuePaid'
   | 'onRewardedLoaded'
   | 'onRewardedFailedToLoad'
   | 'onRewardedShown'
   | 'onRewardedFailedToShow'
   | 'onRewardedClosed'
   | 'onRewardedClicked'
+  | 'onRewardedImpression'
+  | 'onRewardedRevenuePaid'
   | 'onRewardEarned';
 
 declare class CloudX {
@@ -99,16 +116,28 @@ declare class CloudX {
   // User Targeting - Clear all
   clearAllTargeting(): Promise<void>;
 
+  // Banner Management
+  createBanner(config: CloudXAdConfig): Promise<{ success: boolean; adId: string }>;
+  loadBanner(config: { adId: string }): Promise<{ success: boolean }>;
+  showBanner(config: { adId: string }): Promise<{ success: boolean }>;
+  hideBanner(config: { adId: string }): Promise<{ success: boolean }>;
+  startAutoRefresh(config: { adId: string }): Promise<{ success: boolean }>;
+  stopAutoRefresh(config: { adId: string }): Promise<{ success: boolean }>;
+
   // Interstitial Management
-  createInterstitial(placement: string): Promise<{ success: boolean; placement: string }>;
-  loadInterstitial(placement: string): Promise<{ success: boolean }>;
-  showInterstitial(placement: string): Promise<{ success: boolean }>;
-  isInterstitialReady(placement: string): Promise<boolean>;
+  createInterstitial(config: CloudXAdConfig): Promise<{ success: boolean; adId: string }>;
+  loadInterstitial(config: { adId: string }): Promise<{ success: boolean }>;
+  showInterstitial(config: { adId: string }): Promise<{ success: boolean }>;
+  isInterstitialReady(config: { adId: string }): Promise<boolean>;
 
   // Rewarded Management
-  createRewarded(placement: string): Promise<{ success: boolean; placement: string }>;
-  loadRewarded(placement: string): Promise<{ success: boolean }>;
-  showRewarded(placement: string): Promise<{ success: boolean }>;
+  createRewarded(config: CloudXAdConfig): Promise<{ success: boolean; adId: string }>;
+  loadRewarded(config: { adId: string }): Promise<{ success: boolean }>;
+  showRewarded(config: { adId: string }): Promise<{ success: boolean }>;
+  isRewardedReady(config: { adId: string }): Promise<boolean>;
+
+  // Generic Ad Management
+  destroyAd(config: { adId: string }): Promise<{ success: boolean }>;
 
   // Event Management
   addEventListener(eventType: CloudXEventType, handler: (event: CloudXAdEvent) => void): EmitterSubscription;
@@ -124,18 +153,30 @@ declare class CloudX {
 export const CloudXSDKManager: CloudX;
 
 export const CloudXEventTypes: {
+  BANNER_LOADED: 'onBannerLoaded';
+  BANNER_FAILED_TO_LOAD: 'onBannerFailedToLoad';
+  BANNER_SHOWN: 'onBannerShown';
+  BANNER_FAILED_TO_SHOW: 'onBannerFailedToShow';
+  BANNER_HIDDEN: 'onBannerHidden';
+  BANNER_CLICKED: 'onBannerClicked';
+  BANNER_IMPRESSION: 'onBannerImpression';
+  BANNER_REVENUE_PAID: 'onBannerRevenuePaid';
   INTERSTITIAL_LOADED: 'onInterstitialLoaded';
   INTERSTITIAL_FAILED_TO_LOAD: 'onInterstitialFailedToLoad';
   INTERSTITIAL_SHOWN: 'onInterstitialShown';
   INTERSTITIAL_FAILED_TO_SHOW: 'onInterstitialFailedToShow';
   INTERSTITIAL_CLOSED: 'onInterstitialClosed';
   INTERSTITIAL_CLICKED: 'onInterstitialClicked';
+  INTERSTITIAL_IMPRESSION: 'onInterstitialImpression';
+  INTERSTITIAL_REVENUE_PAID: 'onInterstitialRevenuePaid';
   REWARDED_LOADED: 'onRewardedLoaded';
   REWARDED_FAILED_TO_LOAD: 'onRewardedFailedToLoad';
   REWARDED_SHOWN: 'onRewardedShown';
   REWARDED_FAILED_TO_SHOW: 'onRewardedFailedToShow';
   REWARDED_CLOSED: 'onRewardedClosed';
   REWARDED_CLICKED: 'onRewardedClicked';
+  REWARDED_IMPRESSION: 'onRewardedImpression';
+  REWARDED_REVENUE_PAID: 'onRewardedRevenuePaid';
   REWARD_EARNED: 'onRewardEarned';
 };
 

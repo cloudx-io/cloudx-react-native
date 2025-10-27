@@ -182,34 +182,83 @@ class CloudX {
     return CloudXSDK.clearAllTargeting();
   }
 
+  // Banner Management
+  async createBanner(config) {
+    if (Platform.OS !== 'ios') return { success: false };
+    return CloudXSDK.createBanner(config);
+  }
+
+  async loadBanner(config) {
+    if (Platform.OS !== 'ios') return { success: false };
+    return CloudXSDK.loadBanner(config);
+  }
+
+  async showBanner(config) {
+    if (Platform.OS !== 'ios') return { success: false };
+    return CloudXSDK.showBanner(config);
+  }
+
+  async hideBanner(config) {
+    if (Platform.OS !== 'ios') return { success: false };
+    return CloudXSDK.hideBanner(config);
+  }
+
+  async startAutoRefresh(config) {
+    if (Platform.OS !== 'ios') return { success: false };
+    return CloudXSDK.startAutoRefresh(config);
+  }
+
+  async stopAutoRefresh(config) {
+    if (Platform.OS !== 'ios') return { success: false };
+    return CloudXSDK.stopAutoRefresh(config);
+  }
+
   // Interstitial Management
-  async createInterstitial(placement) {
-    return CloudXSDK.createInterstitial(placement);
+  async createInterstitial(config) {
+    if (Platform.OS !== 'ios') return { success: false };
+    return CloudXSDK.createInterstitial(config);
   }
 
-  async loadInterstitial(placement) {
-    return CloudXSDK.loadInterstitial(placement);
+  async loadInterstitial(config) {
+    if (Platform.OS !== 'ios') return { success: false };
+    return CloudXSDK.loadInterstitial(config);
   }
 
-  async showInterstitial(placement) {
-    return CloudXSDK.showInterstitial(placement);
+  async showInterstitial(config) {
+    if (Platform.OS !== 'ios') return { success: false };
+    return CloudXSDK.showInterstitial(config);
   }
 
-  async isInterstitialReady(placement) {
-    return CloudXSDK.isInterstitialReady(placement);
+  async isInterstitialReady(config) {
+    if (Platform.OS !== 'ios') return false;
+    return CloudXSDK.isInterstitialReady(config);
   }
 
   // Rewarded Management
-  async createRewarded(placement) {
-    return CloudXSDK.createRewarded(placement);
+  async createRewarded(config) {
+    if (Platform.OS !== 'ios') return { success: false };
+    return CloudXSDK.createRewarded(config);
   }
 
-  async loadRewarded(placement) {
-    return CloudXSDK.loadRewarded(placement);
+  async loadRewarded(config) {
+    if (Platform.OS !== 'ios') return { success: false };
+    return CloudXSDK.loadRewarded(config);
   }
 
-  async showRewarded(placement) {
-    return CloudXSDK.showRewarded(placement);
+  async showRewarded(config) {
+    if (Platform.OS !== 'ios') return { success: false };
+    return CloudXSDK.showRewarded(config);
+  }
+
+  async isRewardedReady(config) {
+    if (Platform.OS !== 'ios') return false;
+    return CloudXSDK.isRewardedReady(config);
+  }
+
+  // Generic Ad Management
+  async destroyAd(config) {
+    if (Platform.OS !== 'ios') return { success: false };
+    return CloudXSDK.destroyAd(config);
   }
 
   // Event Listeners
@@ -271,18 +320,33 @@ export const CloudXSDKManager = new CloudX();
 
 // Export event types
 export const CloudXEventTypes = {
+  // Banner events
+  BANNER_LOADED: 'onBannerLoaded',
+  BANNER_FAILED_TO_LOAD: 'onBannerFailedToLoad',
+  BANNER_SHOWN: 'onBannerShown',
+  BANNER_FAILED_TO_SHOW: 'onBannerFailedToShow',
+  BANNER_HIDDEN: 'onBannerHidden',
+  BANNER_CLICKED: 'onBannerClicked',
+  BANNER_IMPRESSION: 'onBannerImpression',
+  BANNER_REVENUE_PAID: 'onBannerRevenuePaid',
+  // Interstitial events
   INTERSTITIAL_LOADED: 'onInterstitialLoaded',
   INTERSTITIAL_FAILED_TO_LOAD: 'onInterstitialFailedToLoad',
   INTERSTITIAL_SHOWN: 'onInterstitialShown',
   INTERSTITIAL_FAILED_TO_SHOW: 'onInterstitialFailedToShow',
   INTERSTITIAL_CLOSED: 'onInterstitialClosed',
   INTERSTITIAL_CLICKED: 'onInterstitialClicked',
+  INTERSTITIAL_IMPRESSION: 'onInterstitialImpression',
+  INTERSTITIAL_REVENUE_PAID: 'onInterstitialRevenuePaid',
+  // Rewarded events
   REWARDED_LOADED: 'onRewardedLoaded',
   REWARDED_FAILED_TO_LOAD: 'onRewardedFailedToLoad',
   REWARDED_SHOWN: 'onRewardedShown',
   REWARDED_FAILED_TO_SHOW: 'onRewardedFailedToShow',
   REWARDED_CLOSED: 'onRewardedClosed',
   REWARDED_CLICKED: 'onRewardedClicked',
+  REWARDED_IMPRESSION: 'onRewardedImpression',
+  REWARDED_REVENUE_PAID: 'onRewardedRevenuePaid',
   REWARD_EARNED: 'onRewardEarned',
 };
 
