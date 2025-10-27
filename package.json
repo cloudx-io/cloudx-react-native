@@ -1,0 +1,30 @@
+{
+  "name": "cloudx-react-native",
+  "version": "1.0.0",
+  "description": "React Native wrapper for CloudX iOS SDK",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cloudx-io/cloudx-react-native.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "react-native",
+    "cloudx",
+    "ads",
+    "monetization"
+  ],
+  "author": "CloudX",
+  "license": "Elastic-2.0",
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/react-native": "^0.72.0"
+  }
+}
