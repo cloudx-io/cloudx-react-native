@@ -132,27 +132,6 @@ RCT_EXPORT_METHOD(setIsDoNotSell:(BOOL)doNotSell) {
     [[CloudXCore shared] setIsDoNotSell:doNotSell];
 }
 
-// GPP (Global Privacy Platform)
-RCT_EXPORT_METHOD(setGPPString:(NSString *)gppString) {
-    [[CloudXCore shared] setGPPString:gppString];
-}
-
-RCT_EXPORT_METHOD(getGPPString:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
-    NSString *gppString = [[CloudXCore shared] getGPPString];
-    resolve(gppString ?: [NSNull null]);
-}
-
-RCT_EXPORT_METHOD(setGPPSectionIds:(NSArray<NSNumber *> *)sectionIds) {
-    [[CloudXCore shared] setGPPSid:sectionIds];
-}
-
-RCT_EXPORT_METHOD(getGPPSectionIds:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
-    NSArray *sectionIds = [[CloudXCore shared] getGPPSid];
-    resolve(sectionIds ?: [NSNull null]);
-}
-
 // GDPR
 RCT_EXPORT_METHOD(setIsUserConsent:(BOOL)hasConsent) {
     [[CloudXCore shared] setIsUserConsent:hasConsent];
@@ -710,45 +689,12 @@ RCT_EXPORT_METHOD(destroyAd:(NSDictionary *)config
     }
 }
 
-- (void)closedByUserActionWithAd:(CLXAd *)ad {
-    NSString *adId = [self findAdIdForCLXAd:ad inDictionary:self.banners];
-    if (adId) {
-        [self sendEventWithName:@"onBannerClosedByUser" body:[self adDataFromCLXAd:ad withAdId:adId]];
-        return;
-    }
-    
-    adId = [self findAdIdForCLXAd:ad inDictionary:self.interstitials];
-    if (adId) {
-        [self sendEventWithName:@"onInterstitialClosedByUser" body:[self adDataFromCLXAd:ad withAdId:adId]];
-        return;
-    }
-    
-    adId = [self findAdIdForCLXAd:ad inDictionary:self.rewardeds];
-    if (adId) {
-        [self sendEventWithName:@"onRewardedClosedByUser" body:[self adDataFromCLXAd:ad withAdId:adId]];
-    }
-}
-
 #pragma mark - CLXRewardedDelegate (Rewarded-specific)
 
 - (void)userRewarded:(CLXAd *)ad {
     NSString *adId = [self findAdIdForCLXAd:ad inDictionary:self.rewardeds];
     if (adId) {
         [self sendEventWithName:@"onRewardEarned" body:[self adDataFromCLXAd:ad withAdId:adId]];
-    }
-}
-
-- (void)rewardedVideoStarted:(CLXAd *)ad {
-    NSString *adId = [self findAdIdForCLXAd:ad inDictionary:self.rewardeds];
-    if (adId) {
-        [self sendEventWithName:@"onRewardedVideoStarted" body:[self adDataFromCLXAd:ad withAdId:adId]];
-    }
-}
-
-- (void)rewardedVideoCompleted:(CLXAd *)ad {
-    NSString *adId = [self findAdIdForCLXAd:ad inDictionary:self.rewardeds];
-    if (adId) {
-        [self sendEventWithName:@"onRewardedVideoCompleted" body:[self adDataFromCLXAd:ad withAdId:adId]];
     }
 }
 
