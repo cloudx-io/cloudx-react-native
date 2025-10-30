@@ -373,8 +373,8 @@ RCT_EXPORT_METHOD(createInterstitial:(NSDictionary *)config
             return;
         }
 
-        id<CLXInterstitial> interstitial = [[CloudXCore shared] createInterstitialWithPlacement:placement
-                                                                                        delegate:self];
+        CLXInterstitial *interstitial = [[CloudXCore shared] createInterstitialWithPlacement:placement
+                                                                                   delegate:self];
         if (interstitial) {
             self.interstitials[adId] = interstitial;
             [self.adInstanceToAdId setObject:adId forKey:interstitial];
@@ -390,7 +390,7 @@ RCT_EXPORT_METHOD(loadInterstitial:(NSDictionary *)config
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *adId = config[@"adId"];
-        id<CLXInterstitial> interstitial = self.interstitials[adId];
+        CLXInterstitial *interstitial = self.interstitials[adId];
         if (!interstitial) {
             reject(@"NOT_FOUND", @"Interstitial not found. Create it first.", nil);
             return;
@@ -406,7 +406,7 @@ RCT_EXPORT_METHOD(showInterstitial:(NSDictionary *)config
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *adId = config[@"adId"];
-        id<CLXInterstitial> interstitial = self.interstitials[adId];
+        CLXInterstitial *interstitial = self.interstitials[adId];
         if (!interstitial) {
             reject(@"NOT_FOUND", @"Interstitial not found. Create it first.", nil);
             return;
@@ -427,7 +427,7 @@ RCT_EXPORT_METHOD(isInterstitialReady:(NSDictionary *)config
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
     NSString *adId = config[@"adId"];
-    id<CLXInterstitial> interstitial = self.interstitials[adId];
+    CLXInterstitial *interstitial = self.interstitials[adId];
     BOOL ready = interstitial ? [interstitial isReady] : NO;
     resolve(@(ready));
 }
@@ -451,8 +451,8 @@ RCT_EXPORT_METHOD(createRewarded:(NSDictionary *)config
             return;
         }
 
-        id<CLXRewarded> rewarded = [[CloudXCore shared] createRewardedWithPlacement:placement
-                                                                           delegate:self];
+        CLXRewarded *rewarded = [[CloudXCore shared] createRewardedWithPlacement:placement
+                                                                     delegate:self];
         if (rewarded) {
             self.rewardeds[adId] = rewarded;
             [self.adInstanceToAdId setObject:adId forKey:rewarded];
@@ -468,7 +468,7 @@ RCT_EXPORT_METHOD(loadRewarded:(NSDictionary *)config
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *adId = config[@"adId"];
-        id<CLXRewarded> rewarded = self.rewardeds[adId];
+        CLXRewarded *rewarded = self.rewardeds[adId];
         if (!rewarded) {
             reject(@"NOT_FOUND", @"Rewarded not found. Create it first.", nil);
             return;
@@ -484,7 +484,7 @@ RCT_EXPORT_METHOD(showRewarded:(NSDictionary *)config
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *adId = config[@"adId"];
-        id<CLXRewarded> rewarded = self.rewardeds[adId];
+        CLXRewarded *rewarded = self.rewardeds[adId];
         if (!rewarded) {
             reject(@"NOT_FOUND", @"Rewarded not found. Create it first.", nil);
             return;
@@ -505,7 +505,7 @@ RCT_EXPORT_METHOD(isRewardedReady:(NSDictionary *)config
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
     NSString *adId = config[@"adId"];
-    id<CLXRewarded> rewarded = self.rewardeds[adId];
+    CLXRewarded *rewarded = self.rewardeds[adId];
     BOOL ready = rewarded ? [rewarded isReady] : NO;
     resolve(@(ready));
 }
@@ -779,7 +779,7 @@ RCT_EXPORT_METHOD(destroyAd:(NSDictionary *)config
     return nil;
 }
 
-- (NSString *)getAdIdForInterstitial:(id<CLXInterstitial>)interstitial {
+- (NSString *)getAdIdForInterstitial:(CLXInterstitial *)interstitial {
     for (NSString *key in self.interstitials) {
         if (self.interstitials[key] == interstitial) {
             return key;
@@ -788,7 +788,7 @@ RCT_EXPORT_METHOD(destroyAd:(NSDictionary *)config
     return nil;
 }
 
-- (NSString *)getAdIdForRewarded:(id<CLXRewarded>)rewarded {
+- (NSString *)getAdIdForRewarded:(CLXRewarded *)rewarded {
     for (NSString *key in self.rewardeds) {
         if (self.rewardeds[key] == rewarded) {
             return key;
