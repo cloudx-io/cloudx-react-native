@@ -75,10 +75,10 @@ RCT_EXPORT_METHOD(initSDK:(NSDictionary *)config
         }
         
         if (hashedUserID) {
-            [[CloudXCore shared] provideUserDetailsWithHashedUserID:hashedUserID];
+            [[CloudXCore shared] setHashedUserID:hashedUserID];
         }
         
-        [[CloudXCore shared] initSDKWithAppKey:appKey completion:^(BOOL success, NSError * _Nullable error) {
+        [[CloudXCore shared] initializeSDKWithAppKey:appKey completion:^(BOOL success, NSError * _Nullable error) {
             if (success) {
                 RCTLogInfo(@"CloudX SDK initialized successfully");
                 resolve(@{
