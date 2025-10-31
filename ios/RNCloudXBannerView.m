@@ -190,9 +190,6 @@
     RCTLogInfo(@"[CloudXBannerView] Banner revenue paid: %@", ad.revenue);
 }
 
-- (void)closedByUserActionWithAd:(CLXAd *)ad {
-    RCTLogInfo(@"[CloudXBannerView] Banner closed by user");
-}
 
 - (void)didExpandAd:(CLXAd *)ad {
     RCTLogInfo(@"[CloudXBannerView] Banner expanded");

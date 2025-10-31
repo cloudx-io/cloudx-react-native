@@ -95,12 +95,6 @@ RCT_EXPORT_METHOD(initSDK:(NSDictionary *)config
     });
 }
 
-RCT_EXPORT_METHOD(isInitialized:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
-    BOOL initialized = [[CloudXCore shared] isInitialized];
-    resolve(@(initialized));
-}
-
 RCT_EXPORT_METHOD(getVersion:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
     NSString *version = [[CloudXCore shared] getSDKVersion];
@@ -178,12 +172,6 @@ RCT_EXPORT_METHOD(setHashedUserID:(NSString *)hashedUserID) {
     [[CloudXCore shared] provideUserDetailsWithHashedUserID:hashedUserID];
 }
 
-RCT_EXPORT_METHOD(getUserID:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
-    NSString *userID = [[CloudXCore shared] userID];
-    resolve(userID ?: [NSNull null]);
-}
-
 RCT_EXPORT_METHOD(setUserID:(NSString *)userID) {
     [[CloudXCore shared] setUserID:userID];
 }
@@ -228,11 +216,6 @@ RCT_EXPORT_METHOD(createBanner:(NSDictionary *)config
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (![[CloudXCore shared] isInitialized]) {
-            reject(@"NOT_INITIALIZED", @"SDK not initialized", nil);
-            return;
-        }
-
         NSString *placement = config[@"placement"];
         NSString *adId = config[@"adId"];
         
@@ -339,11 +322,6 @@ RCT_EXPORT_METHOD(createInterstitial:(NSDictionary *)config
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (![[CloudXCore shared] isInitialized]) {
-            reject(@"NOT_INITIALIZED", @"SDK not initialized", nil);
-            return;
-        }
-
         NSString *placement = config[@"placement"];
         NSString *adId = config[@"adId"];
         
@@ -417,11 +395,6 @@ RCT_EXPORT_METHOD(createRewarded:(NSDictionary *)config
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (![[CloudXCore shared] isInitialized]) {
-            reject(@"NOT_INITIALIZED", @"SDK not initialized", nil);
-            return;
-        }
-
         NSString *placement = config[@"placement"];
         NSString *adId = config[@"adId"];
         
