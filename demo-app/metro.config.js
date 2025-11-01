@@ -1,12 +1,22 @@
-const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const path = require('path');
 
 /**
  * Metro configuration
  * https://reactnative.dev/docs/metro
  *
- * @type {import('metro-config').MetroConfig}
+ * @type {import('@react-native/metro-config').MetroConfig}
  */
-const config = {};
+const config = {
+  watchFolders: [
+    path.resolve(__dirname, '../..'), // Watch parent directory (cloudx-react-native root)
+  ],
+  resolver: {
+    nodeModulesPaths: [
+      path.resolve(__dirname, 'node_modules'),
+      path.resolve(__dirname, '../..'), // Include parent directory for local module resolution
+    ],
+  },
+};
 
 module.exports = mergeConfig(getDefaultConfig(__dirname), config);
-

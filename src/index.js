@@ -356,13 +356,7 @@ export const CloudXEventTypes = {
   REWARD_EARNED: 'onRewardEarned',
 };
 
-// Export Banner component
-export const CloudXBannerView = Platform.OS === 'ios'
-  ? requireNativeComponent('CloudXBannerView')
-  : () => {
-      console.warn('CloudXBannerView is only supported on iOS');
-      return null;
-    };
+// CloudXBannerView is exported from './CloudXBannerView' above (line 325)
 
 // Export banner sizes
 export const BannerSizes = {

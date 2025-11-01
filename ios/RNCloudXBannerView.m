@@ -4,6 +4,7 @@
 //
 
 #import "RNCloudXBannerView.h"
+#import "NSError+CloudXDemo.h"
 #import <React/RCTLog.h>
 
 @interface RNCloudXBannerView ()
@@ -28,11 +29,14 @@
     }
 }
 
+- (void)setShouldLoad:(BOOL)shouldLoad {
+    _shouldLoad = shouldLoad;
+}
+
 - (void)didSetProps:(NSArray<NSString *> *)changedProps {
-    [super didSetProps:changedProps];
-    
-    // Only create the ad once we have all required props
-    if (!self.hasCreatedAd && self.placement && self.adId) {
+    // This is called AFTER all props are set in the update cycle
+    // Check if we should create and load the ad now that all props are available
+    if (self.shouldLoad && !self.hasCreatedAd && self.placement && self.adId) {
         [self createAndLoadBanner];
     }
 }
@@ -40,17 +44,6 @@
 - (void)createAndLoadBanner {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self.hasCreatedAd) {
-            return;
-        }
-        
-        if (![[CloudXCore shared] isInitialized]) {
-            RCTLogError(@"[CloudXBannerView] SDK not initialized");
-            if (self.onAdFailedToLoad) {
-                self.onAdFailedToLoad(@{
-                    @"adId": self.adId ?: @"",
-                    @"error": @"SDK not initialized"
-                });
-            }
             return;
         }
         
@@ -152,12 +145,21 @@
 
 - (void)failToLoadWithAd:(CLXAd *)ad error:(NSError *)error {
     RCTLogError(@"[CloudXBannerView] Banner failed to load: %@", error.localizedDescription);
+    
+    // Send event to React Native
     if (self.onAdFailedToLoad) {
         self.onAdFailedToLoad(@{
             @"adId": self.adId ?: @"",
             @"error": error.localizedDescription ?: @"Unknown error"
         });
     }
+    
+    // Show alert dialog like Objective-C demo app
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *errorMessage = error ? [error detailedDemoDescription] : @"Unknown error occurred";
+        NSString *adType = [self.bannerSize isEqualToString:@"MREC"] ? @"MREC" : @"Banner";
+        [self showAlertWithTitle:[NSString stringWithFormat:@"%@ Ad Load Failed", adType] message:errorMessage];
+    });
 }
 
 - (void)didShowWithAd:(CLXAd *)ad {
@@ -165,6 +167,10 @@
     if (self.onAdShown) {
         self.onAdShown(@{@"adId": self.adId ?: @""});
     }
+}
+
+- (void)failToShowWithAd:(CLXAd *)ad error:(NSError *)error {
+    RCTLogError(@"[CloudXBannerView] Banner failed to show: %@", error.localizedDescription);
 }
 
 - (void)didClickWithAd:(CLXAd *)ad {
@@ -197,6 +203,26 @@
 
 - (void)didCollapseAd:(CLXAd *)ad {
     RCTLogInfo(@"[CloudXBannerView] Banner collapsed");
+}
+
+#pragma mark - Alert Helper
+
+- (void)showAlertWithTitle:(NSString *)title message:(NSString *)message {
+    UIViewController *viewController = [self reactViewController];
+    if (!viewController) {
+        RCTLogError(@"[CloudXBannerView] Cannot show alert - no view controller");
+        return;
+    }
+    
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
+                                                                   message:message
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alert addAction:[UIAlertAction actionWithTitle:@"OK"
+                                              style:UIAlertActionStyleDefault
+                                            handler:nil]];
+    
+    [viewController presentViewController:alert animated:YES completion:nil];
 }
 
 @end

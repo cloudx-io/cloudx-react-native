@@ -1,201 +1,97 @@
-# CloudX React Native Demo App
+This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
-Full-featured demo application showcasing CloudX SDK integration for React Native.
+# Getting Started
 
-## Features
+> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
 
-- ✅ SDK Initialization with environment selection (Dev, Staging, Production)
-- ✅ Interstitial ad integration
-- ✅ Rewarded ad integration with reward tracking
-- ✅ Event logging with real-time log viewer
-- ✅ Banner ad support (coming soon)
-- ✅ MREC ad support (coming soon)
-- ✅ TypeScript throughout
-- ✅ Modern React Native patterns
+## Step 1: Start Metro
 
-## Setup
+First, you will need to run **Metro**, the JavaScript build tool for React Native.
 
-### Prerequisites
+To start the Metro dev server, run the following command from the root of your React Native project:
 
-- Node.js >= 18
-- React Native development environment set up
-- iOS development tools (Xcode, CocoaPods)
-- CloudXCore SDK (in cloudx-ios monorepo)
+```sh
+# Using npm
+npm start
 
-### Installation
-
-1. Install dependencies:
-```bash
-npm install
-# or
-yarn install
+# OR using Yarn
+yarn start
 ```
 
-2. Install iOS pods:
-```bash
-cd ios
-pod install
-cd ..
+## Step 2: Build and run your app
+
+With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+
+### Android
+
+```sh
+# Using npm
+npm run android
+
+# OR using Yarn
+yarn android
 ```
 
-3. Run the app:
-```bash
-# iOS
+### iOS
+
+For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+
+The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+
+```sh
+bundle install
+```
+
+Then, and every time you update your native dependencies, run:
+
+```sh
+bundle exec pod install
+```
+
+For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+
+```sh
+# Using npm
 npm run ios
-# or
+
+# OR using Yarn
 yarn ios
 ```
 
-## Architecture
+If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
 
-### Project Structure
+This is one way to run your app — you can also build it directly from Android Studio or Xcode.
 
-```
-demo-app/
-├── App.tsx                 # Main app with init & navigation
-├── src/
-│   ├── config/
-│   │   └── DemoConfig.ts   # Environment configurations
-│   ├── utils/
-│   │   └── DemoAppLogger.ts # Event logger
-│   └── screens/
-│       ├── InterstitialScreen.tsx  # Full-screen interstitial ads
-│       ├── RewardedScreen.tsx      # Rewarded video ads
-│       ├── LogsScreen.tsx          # Event log viewer
-│       ├── BannerScreen.tsx        # Banner ads (placeholder)
-│       └── MRECScreen.tsx          # MREC ads (placeholder)
-├── ios/
-│   ├── Podfile             # CocoaPods configuration
-│   └── CloudXReactNativeDemo/
-│       └── Info.plist      # App permissions & config
-└── package.json            # Dependencies
+## Step 3: Modify your app
 
-```
+Now that you have successfully run the app, let's make changes!
 
-### Key Components
+Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
 
-**InitScreen**: Environment selection (Dev, Staging, Production) and SDK initialization.
+When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
 
-**MainTabView**: Bottom tab navigation between different ad types.
+- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
+- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
 
-**Ad Screens**: Interactive demos for each ad format with:
-- Load/Show controls
-- Status indicators
-- Event handling
-- Integration with DemoAppLogger
+## Congratulations! :tada:
 
-**LogsScreen**: Modal viewer for all ad events and interactions.
+You've successfully run and modified your React Native App. :partying_face:
 
-**DemoAppLogger**: Centralized logging system with:
-- Real-time updates via subscription pattern
-- Formatted timestamps
-- Event filtering
-- 500-event limit
+### Now what?
 
-## Usage
+- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
+- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
 
-### 1. Initialize SDK
+# Troubleshooting
 
-Launch the app and select an environment:
-- **Init Dev**: Development environment with test ads
-- **Init Staging**: Staging environment
-- **Init Production**: Production environment
+If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
 
-### 2. Navigate to Ad Type
+# Learn More
 
-Use the bottom tabs to navigate between:
-- 📱 Banner (coming soon)
-- ⬜ MREC (coming soon)
-- 🖼️ Interstitial
-- 🎁 Rewarded
+To learn more about React Native, take a look at the following resources:
 
-### 3. Load & Show Ads
-
-1. Tap "Load Interstitial" or "Load Rewarded"
-2. Wait for ad to load (status indicator will turn green)
-3. Tap "Show Interstitial" or "Show Rewarded"
-4. Ad will display full-screen
-
-### 4. View Logs
-
-Tap "📋 Logs" in the header to view all ad events:
-- Load success/failure
-- Show success/failure
-- Clicks
-- Rewards earned
-- Timestamps for debugging
-
-## Configuration
-
-### Environment Configs
-
-Located in `src/config/DemoConfig.ts`:
-
-```typescript
-DemoConfig.iosDev = {
-  name: 'Development',
-  appKey: 'g0PdN9_0ilfIcuNXhBopl',
-  hashedUserId: 'test-user-123',
-  bannerPlacement: 'metaBanner',
-  mrecPlacement: 'metaMREC',
-  interstitialPlacement: 'metaInterstitial',
-  rewardedPlacement: 'metaRewarded',
-};
-```
-
-### Podfile Configuration
-
-The `ios/Podfile` references:
-- CloudX React Native SDK (local)
-- CloudXCore SDK (from cloudx-ios monorepo)
-- Optional: CloudXMetaAdapter
-
-Update paths if your monorepo structure differs.
-
-## Troubleshooting
-
-### Pod Install Issues
-
-```bash
-cd ios
-pod deintegrate
-pod install
-```
-
-### Metro Bundler Issues
-
-```bash
-npm start -- --reset-cache
-```
-
-### Build Failures
-
-1. Clean build:
-```bash
-cd ios
-xcodebuild clean
-```
-
-2. Remove derived data:
-```bash
-rm -rf ~/Library/Developer/Xcode/DerivedData
-```
-
-### SDK Not Initializing
-
-- Check app key in `DemoConfig.ts`
-- Verify CloudXCore SDK is linked in Podfile
-- Check logs for error messages
-
-## Next Steps
-
-- [ ] Implement BannerScreen with CloudXBannerView component
-- [ ] Implement MRECScreen with proper 300x250 sizing
-- [ ] Add native ads support
-- [ ] Enhance event payloads with revenue data
-- [ ] Add comprehensive unit tests
-
-## License
-
-Elastic License 2.0 - See LICENSE file
-
+- [React Native Website](https://reactnative.dev) - learn more about React Native.
+- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
+- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
+- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
+- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.

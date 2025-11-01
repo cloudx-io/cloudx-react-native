@@ -192,6 +192,8 @@ function InitScreen({ onInitialized }: InitScreenProps): React.JSX.Element {
                 DemoConfig.androidProduction
               )
             }
+            forceDisabled={__DEV__}
+            disabledMessage="Production requires Release build"
           />
         </View>
 
@@ -219,6 +221,8 @@ interface EnvironmentButtonProps {
   isInitialized: boolean;
   onPress: (config: DemoEnvironmentConfig) => void;
   isCurrentlyInitializing: boolean;
+  forceDisabled?: boolean;
+  disabledMessage?: string;
 }
 
 function EnvironmentButton({
@@ -229,23 +233,30 @@ function EnvironmentButton({
   isInitialized,
   onPress,
   isCurrentlyInitializing,
+  forceDisabled = false,
+  disabledMessage,
 }: EnvironmentButtonProps): React.JSX.Element {
-  const disabled = isInitializing || isInitialized;
+  const disabled = isInitializing || isInitialized || forceDisabled;
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.envButton,
-        { backgroundColor: disabled ? `${color}80` : color },
-      ]}
-      onPress={() => onPress(config)}
-      disabled={disabled}>
-      {isCurrentlyInitializing ? (
-        <ActivityIndicator size="small" color="#FFFFFF" />
-      ) : (
-        <Text style={styles.envButtonText}>{label}</Text>
+    <View>
+      <TouchableOpacity
+        style={[
+          styles.envButton,
+          { backgroundColor: disabled ? `${color}80` : color },
+        ]}
+        onPress={() => onPress(config)}
+        disabled={disabled}>
+        {isCurrentlyInitializing ? (
+          <ActivityIndicator size="small" color="#FFFFFF" />
+        ) : (
+          <Text style={styles.envButtonText}>{label}</Text>
+        )}
+      </TouchableOpacity>
+      {forceDisabled && disabledMessage && (
+        <Text style={styles.disabledMessage}>{disabledMessage}</Text>
       )}
-    </TouchableOpacity>
+    </View>
   );
 }
 
@@ -368,6 +379,12 @@ const styles = StyleSheet.create({
   logsButtonText: {
     fontSize: 14,
     color: '#2196F3',
+  },
+  disabledMessage: {
+    marginTop: 4,
+    fontSize: 12,
+    color: '#757575',
+    textAlign: 'center',
   },
 });
 

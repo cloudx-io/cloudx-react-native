@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { CloudXSDKManager, CloudXEventTypes } from 'cloudx-react-native';
 import { DemoEnvironmentConfig } from '../config/DemoConfig';
 import { logger } from '../utils/DemoAppLogger';
@@ -28,6 +29,13 @@ const InterstitialScreen: React.FC<InterstitialScreenProps> = ({ environment }) 
 
   // Generate unique ad ID
   const generateAdId = () => `interstitial_${Date.now()}`;
+
+  // Clear logs when screen gains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      logger.clearLogs();
+    }, [])
+  );
 
   // Setup event listeners
   useEffect(() => {

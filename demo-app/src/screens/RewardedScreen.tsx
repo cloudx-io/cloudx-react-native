@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { CloudXSDKManager, CloudXEventTypes } from 'cloudx-react-native';
 import { DemoEnvironmentConfig } from '../config/DemoConfig';
 import { logger } from '../utils/DemoAppLogger';
@@ -30,6 +31,13 @@ const RewardedScreen: React.FC<RewardedScreenProps> = ({ environment }) => {
 
   // Generate unique ad ID
   const generateAdId = () => `rewarded_${Date.now()}`;
+
+  // Clear logs when screen gains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      logger.clearLogs();
+    }, [])
+  );
 
   // Setup event listeners
   useEffect(() => {
