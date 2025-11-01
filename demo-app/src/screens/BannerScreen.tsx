@@ -3,7 +3,7 @@
  * Demonstrates CloudX banner ad integration
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -25,10 +25,14 @@ const BannerScreen: React.FC<BannerScreenProps> = ({ environment }) => {
   const [shouldRenderBanner, setShouldRenderBanner] = useState(false);
   const [key, setKey] = useState(0);
 
-  // Clear logs and reset state when screen gains focus
+  // Clear logs on initial mount
+  useEffect(() => {
+    logger.clearLogs();
+  }, []);
+
+  // Reset state when screen gains focus (tab switching)
   useFocusEffect(
     React.useCallback(() => {
-      logger.clearLogs();
       setShouldRenderBanner(false);
       setStatus('No Ad Loaded');
       setStatusColor('#F44336');
@@ -36,7 +40,6 @@ const BannerScreen: React.FC<BannerScreenProps> = ({ environment }) => {
   );
 
   const handleLoadBanner = () => {
-    logger.logMessage('🔄 User clicked Load Banner');
     setStatus('Loading...');
     setStatusColor('#FF9800');
     setShouldRenderBanner(true);
@@ -68,6 +71,30 @@ const BannerScreen: React.FC<BannerScreenProps> = ({ environment }) => {
 
   const handleAdHidden = (event: any) => {
     logger.logAdEvent('🙈 Banner hidden', event);
+  };
+
+  const handleAdFailedToShow = (event: any) => {
+    logger.logAdEvent('❌ Banner failed to show', event);
+    logger.logMessage(`  Error: ${event.error}`);
+  };
+
+  const handleAdImpression = (event: any) => {
+    logger.logAdEvent('👁️ Banner impression', event);
+  };
+
+  const handleAdRevenuePaid = (event: any) => {
+    logger.logAdEvent('💰 Banner revenue paid', event);
+    if (event.revenue) {
+      logger.logMessage(`  Revenue: $${event.revenue}`);
+    }
+  };
+
+  const handleAdExpanded = (event: any) => {
+    logger.logAdEvent('📤 Banner expanded', event);
+  };
+
+  const handleAdCollapsed = (event: any) => {
+    logger.logAdEvent('📥 Banner collapsed', event);
   };
 
   return (
@@ -112,8 +139,13 @@ const BannerScreen: React.FC<BannerScreenProps> = ({ environment }) => {
             onAdLoaded={handleAdLoaded}
             onAdFailedToLoad={handleAdFailedToLoad}
             onAdShown={handleAdShown}
+            onAdFailedToShow={handleAdFailedToShow}
             onAdClicked={handleAdClicked}
             onAdHidden={handleAdHidden}
+            onAdImpression={handleAdImpression}
+            onAdRevenuePaid={handleAdRevenuePaid}
+            onAdExpanded={handleAdExpanded}
+            onAdCollapsed={handleAdCollapsed}
             style={styles.banner}
           />
         ) : (

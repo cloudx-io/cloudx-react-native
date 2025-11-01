@@ -3,7 +3,7 @@
  * Demonstrates CloudX MREC (Medium Rectangle) ad integration (300x250)
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -25,10 +25,14 @@ const MRECScreen: React.FC<MRECScreenProps> = ({ environment }) => {
   const [shouldRenderMREC, setShouldRenderMREC] = useState(false);
   const [key, setKey] = useState(0);
 
-  // Clear logs and reset state when screen gains focus
+  // Clear logs on initial mount
+  useEffect(() => {
+    logger.clearLogs();
+  }, []);
+
+  // Reset state when screen gains focus (tab switching)
   useFocusEffect(
     React.useCallback(() => {
-      logger.clearLogs();
       setShouldRenderMREC(false);
       setStatus('No Ad Loaded');
       setStatusColor('#F44336');
@@ -36,7 +40,6 @@ const MRECScreen: React.FC<MRECScreenProps> = ({ environment }) => {
   );
 
   const handleLoadMREC = () => {
-    logger.logMessage('🔄 User clicked Load MREC');
     setStatus('Loading...');
     setStatusColor('#FF9800');
     setShouldRenderMREC(true);
@@ -68,6 +71,30 @@ const MRECScreen: React.FC<MRECScreenProps> = ({ environment }) => {
 
   const handleAdHidden = (event: any) => {
     logger.logAdEvent('🙈 MREC hidden', event);
+  };
+
+  const handleAdFailedToShow = (event: any) => {
+    logger.logAdEvent('❌ MREC failed to show', event);
+    logger.logMessage(`  Error: ${event.error}`);
+  };
+
+  const handleAdImpression = (event: any) => {
+    logger.logAdEvent('👁️ MREC impression', event);
+  };
+
+  const handleAdRevenuePaid = (event: any) => {
+    logger.logAdEvent('💰 MREC revenue paid', event);
+    if (event.revenue) {
+      logger.logMessage(`  Revenue: $${event.revenue}`);
+    }
+  };
+
+  const handleAdExpanded = (event: any) => {
+    logger.logAdEvent('📤 MREC expanded', event);
+  };
+
+  const handleAdCollapsed = (event: any) => {
+    logger.logAdEvent('📥 MREC collapsed', event);
   };
 
   return (
@@ -112,8 +139,13 @@ const MRECScreen: React.FC<MRECScreenProps> = ({ environment }) => {
             onAdLoaded={handleAdLoaded}
             onAdFailedToLoad={handleAdFailedToLoad}
             onAdShown={handleAdShown}
+            onAdFailedToShow={handleAdFailedToShow}
             onAdClicked={handleAdClicked}
             onAdHidden={handleAdHidden}
+            onAdImpression={handleAdImpression}
+            onAdRevenuePaid={handleAdRevenuePaid}
+            onAdExpanded={handleAdExpanded}
+            onAdCollapsed={handleAdCollapsed}
             style={styles.mrec}
           />
         ) : (

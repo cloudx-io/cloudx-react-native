@@ -113,7 +113,6 @@ const InterstitialScreen: React.FC<InterstitialScreenProps> = ({ environment }) 
   }, [currentAdId]);
 
   const handleLoad = async () => {
-    logger.logMessage('🔄 User clicked Load Interstitial');
     setIsLoading(true);
     setStatus('Loading...');
     setStatusColor('#FF9800');
@@ -143,8 +142,6 @@ const InterstitialScreen: React.FC<InterstitialScreenProps> = ({ environment }) 
       logger.logMessage('⚠️ No ad loaded to show');
       return;
     }
-
-    logger.logMessage('🎬 User clicked Show Interstitial');
 
     try {
       await CloudXSDKManager.showInterstitial({ adId: currentAdId });

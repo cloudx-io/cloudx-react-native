@@ -135,7 +135,6 @@ const RewardedScreen: React.FC<RewardedScreenProps> = ({ environment }) => {
   }, [currentAdId, rewardEarned]);
 
   const handleLoad = async () => {
-    logger.logMessage('🔄 User clicked Load Rewarded');
     setIsLoading(true);
     setStatus('Loading...');
     setStatusColor('#FF9800');
@@ -165,8 +164,6 @@ const RewardedScreen: React.FC<RewardedScreenProps> = ({ environment }) => {
       logger.logMessage('⚠️ No ad loaded to show');
       return;
     }
-
-    logger.logMessage('🎬 User clicked Show Rewarded');
 
     try {
       await CloudXSDKManager.showRewarded({ adId: currentAdId });
