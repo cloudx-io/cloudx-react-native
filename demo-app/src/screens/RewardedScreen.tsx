@@ -227,25 +227,6 @@ const RewardedScreen: React.FC<RewardedScreenProps> = ({ environment }) => {
           <Text style={styles.buttonText}>Show Rewarded</Text>
         </TouchableOpacity>
       </View>
-
-      <View style={styles.spacer} />
-
-      {/* Info Container */}
-      <View style={styles.infoContainer}>
-        <Text style={styles.infoTitle}>Rewarded Ads</Text>
-        <Text style={styles.infoText}>
-          • Full-screen video ads that offer rewards
-        </Text>
-        <Text style={styles.infoText}>
-          • Users must watch to completion for reward
-        </Text>
-        <Text style={styles.infoText}>
-          • Listen for REWARD_EARNED event
-        </Text>
-        <Text style={styles.infoText}>
-          • Grant in-app currency or items on reward
-        </Text>
-      </View>
     </View>
   );
 };
@@ -324,27 +305,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-  },
-  spacer: {
-    flex: 1,
-  },
-  infoContainer: {
-    margin: 20,
-    padding: 16,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  infoTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  infoText: {
-    fontSize: 14,
-    marginBottom: 6,
-    color: '#424242',
   },
 });
 

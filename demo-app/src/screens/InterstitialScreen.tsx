@@ -197,25 +197,6 @@ const InterstitialScreen: React.FC<InterstitialScreenProps> = ({ environment }) 
           <Text style={styles.buttonText}>Show Interstitial</Text>
         </TouchableOpacity>
       </View>
-
-      <View style={styles.spacer} />
-
-      {/* Info Container */}
-      <View style={styles.infoContainer}>
-        <Text style={styles.infoTitle}>Interstitial Ads</Text>
-        <Text style={styles.infoText}>
-          • Full-screen ads that cover the entire app
-        </Text>
-        <Text style={styles.infoText}>
-          • Shown modally by the native SDK
-        </Text>
-        <Text style={styles.infoText}>
-          • No UI component needed in React Native
-        </Text>
-        <Text style={styles.infoText}>
-          • Load first, then show when ready
-        </Text>
-      </View>
     </View>
   );
 };
@@ -269,27 +250,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-  },
-  spacer: {
-    flex: 1,
-  },
-  infoContainer: {
-    margin: 20,
-    padding: 16,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  infoTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  infoText: {
-    fontSize: 14,
-    marginBottom: 6,
-    color: '#424242',
   },
 });
 
