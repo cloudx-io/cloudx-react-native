@@ -41,3 +41,6 @@ local.properties
 coverage/
 *.log
 
+demo-app-broken/
+*.lock
+Podfile.lock
