@@ -5,11 +5,20 @@
 
 import { NativeModules, NativeEventEmitter, requireNativeComponent, Platform } from 'react-native';
 
-const { CloudXSDK } = NativeModules;
+// Platform-specific module names
+const CloudXNativeModule = Platform.select({
+  ios: NativeModules.CloudXSDK,
+  android: NativeModules.CloudXReactNative,
+  default: null,
+});
+
+if (!CloudXNativeModule) {
+  console.error('CloudX native module not found');
+}
 
 class CloudX {
   constructor() {
-    this.eventEmitter = new NativeEventEmitter(CloudXSDK);
+    this.eventEmitter = CloudXNativeModule ? new NativeEventEmitter(CloudXNativeModule) : null;
     this.listeners = {};
     this.interstitialListeners = {};
     this.rewardedListeners = {};
@@ -17,9 +26,9 @@ class CloudX {
 
   // SDK Initialization
   async initialize(config) {
-    if (Platform.OS !== 'ios') {
-      console.warn('CloudX SDK currently only supports iOS');
-      return Promise.resolve({ success: false, message: 'Only iOS supported' });
+    if (!CloudXNativeModule) {
+      console.error('CloudX SDK not available on this platform');
+      return Promise.resolve({ success: false, message: 'Platform not supported' });
     }
     
     // Support both string and object formats for backwards compatibility
@@ -27,91 +36,93 @@ class CloudX {
       ? { appKey: config }
       : config;
     
-    return CloudXSDK.initSDK(initConfig);
+    // Platform-specific initialization
+    if (Platform.OS === 'ios') {
+      return CloudXNativeModule.initSDK(initConfig);
+    } else if (Platform.OS === 'android') {
+      return CloudXNativeModule.initializeSDK(initConfig.appKey);
+    }
+    
+    return Promise.resolve({ success: false, message: 'Unknown platform' });
   }
 
   async isInitialized() {
-    return CloudXSDK.isInitialized();
+    if (!CloudXNativeModule) return false;
+    return CloudXNativeModule.isInitialized();
   }
 
   async getVersion() {
-    if (Platform.OS !== 'ios') {
-      return 'Unknown';
-    }
-    return CloudXSDK.getVersion();
+    if (!CloudXNativeModule) return 'Unknown';
+    return CloudXNativeModule.getVersion();
   }
 
   async setLoggingEnabled(enabled) {
-    if (Platform.OS !== 'ios') {
-      return;
-    }
-    return CloudXSDK.setLoggingEnabled(enabled);
+    if (!CloudXNativeModule) return;
+    return CloudXNativeModule.setLoggingEnabled(enabled);
   }
 
   async setEnvironment(environment) {
-    if (Platform.OS !== 'ios') {
-      return;
-    }
-    return CloudXSDK.setEnvironment(environment);
+    if (!CloudXNativeModule) return;
+    return CloudXNativeModule.setEnvironment(environment);
   }
 
   // Privacy Methods - CCPA
   async setCCPAPrivacyString(ccpaString) {
-    if (Platform.OS !== 'ios') return;
-    return CloudXSDK.setCCPAPrivacyString(ccpaString);
+    if (!CloudXNativeModule) return;
+    return CloudXNativeModule.setCCPAPrivacyString(ccpaString);
   }
 
   async getCCPAPrivacyString() {
-    if (Platform.OS !== 'ios') return null;
-    return CloudXSDK.getCCPAPrivacyString();
+    if (!CloudXNativeModule) return null;
+    return CloudXNativeModule.getCCPAPrivacyString();
   }
 
   async setIsDoNotSell(doNotSell) {
-    if (Platform.OS !== 'ios') return;
-    return CloudXSDK.setIsDoNotSell(doNotSell);
+    if (!CloudXNativeModule) return;
+    return CloudXNativeModule.setIsDoNotSell(doNotSell);
   }
 
   // Privacy Methods - GPP
   async setGPPString(gppString) {
-    if (Platform.OS !== 'ios') return;
-    return CloudXSDK.setGPPString(gppString);
+    if (!CloudXNativeModule) return;
+    return CloudXNativeModule.setGPPString(gppString);
   }
 
   async getGPPString() {
-    if (Platform.OS !== 'ios') return null;
-    return CloudXSDK.getGPPString();
+    if (!CloudXNativeModule) return null;
+    return CloudXNativeModule.getGPPString();
   }
 
   async setGPPSectionIds(sectionIds) {
-    if (Platform.OS !== 'ios') return;
-    return CloudXSDK.setGPPSectionIds(sectionIds);
+    if (!CloudXNativeModule) return;
+    return CloudXNativeModule.setGPPSectionIds(sectionIds);
   }
 
   async getGPPSectionIds() {
-    if (Platform.OS !== 'ios') return null;
-    return CloudXSDK.getGPPSectionIds();
+    if (!CloudXNativeModule) return null;
+    return CloudXNativeModule.getGPPSectionIds();
   }
 
   // Privacy Methods - GDPR
   async setIsUserConsent(hasConsent) {
-    if (Platform.OS !== 'ios') return;
-    return CloudXSDK.setIsUserConsent(hasConsent);
+    if (!CloudXNativeModule) return;
+    return CloudXNativeModule.setIsUserConsent(hasConsent);
   }
 
   async getIsUserConsent() {
-    if (Platform.OS !== 'ios') return false;
-    return CloudXSDK.getIsUserConsent();
+    if (!CloudXNativeModule) return false;
+    return CloudXNativeModule.getIsUserConsent();
   }
 
   // Privacy Methods - COPPA
   async setIsAgeRestrictedUser(isAgeRestricted) {
-    if (Platform.OS !== 'ios') return;
-    return CloudXSDK.setIsAgeRestrictedUser(isAgeRestricted);
+    if (!CloudXNativeModule) return;
+    return CloudXNativeModule.setIsAgeRestrictedUser(isAgeRestricted);
   }
 
   async getIsAgeRestrictedUser() {
-    if (Platform.OS !== 'ios') return false;
-    return CloudXSDK.getIsAgeRestrictedUser();
+    if (!CloudXNativeModule) return false;
+    return CloudXNativeModule.getIsAgeRestrictedUser();
   }
 
   // Legacy privacy methods (deprecated)
@@ -133,132 +144,132 @@ class CloudX {
 
   // User Targeting - User ID
   async setHashedUserID(hashedUserID) {
-    if (Platform.OS !== 'ios') return;
-    return CloudXSDK.setHashedUserID(hashedUserID);
+    if (!CloudXNativeModule) return;
+    return CloudXNativeModule.setHashedUserID(hashedUserID);
   }
 
   async getUserID() {
-    if (Platform.OS !== 'ios') return null;
-    return CloudXSDK.getUserID();
+    if (!CloudXNativeModule) return null;
+    return CloudXNativeModule.getUserID();
   }
 
   async setUserID(userID) {
-    if (Platform.OS !== 'ios') return;
-    return CloudXSDK.setUserID(userID);
+    if (!CloudXNativeModule) return;
+    return CloudXNativeModule.setUserID(userID);
   }
 
   // User Targeting - Generic key-values
   async setTargetingKeyValue(key, value) {
-    if (Platform.OS !== 'ios') return;
-    return CloudXSDK.setTargetingKeyValue(key, value);
+    if (!CloudXNativeModule) return;
+    return CloudXNativeModule.setTargetingKeyValue(key, value);
   }
 
   async setTargetingKeyValues(keyValues) {
-    if (Platform.OS !== 'ios') return;
-    return CloudXSDK.setTargetingKeyValues(keyValues);
+    if (!CloudXNativeModule) return;
+    return CloudXNativeModule.setTargetingKeyValues(keyValues);
   }
 
   // User Targeting - User-level (privacy-sensitive)
   async setUserKeyValue(key, value) {
-    if (Platform.OS !== 'ios') return;
-    return CloudXSDK.setUserKeyValue(key, value);
+    if (!CloudXNativeModule) return;
+    return CloudXNativeModule.setUserKeyValue(key, value);
   }
 
   // User Targeting - App-level (persistent)
   async setAppKeyValue(key, value) {
-    if (Platform.OS !== 'ios') return;
-    return CloudXSDK.setAppKeyValue(key, value);
+    if (!CloudXNativeModule) return;
+    return CloudXNativeModule.setAppKeyValue(key, value);
   }
 
   // User Targeting - Bidder-specific
   async setBidderKeyValue(bidder, key, value) {
-    if (Platform.OS !== 'ios') return;
-    return CloudXSDK.setBidderKeyValue(bidder, key, value);
+    if (!CloudXNativeModule) return;
+    return CloudXNativeModule.setBidderKeyValue(bidder, key, value);
   }
 
   // User Targeting - Clear all
   async clearAllTargeting() {
-    if (Platform.OS !== 'ios') return;
-    return CloudXSDK.clearAllTargeting();
+    if (!CloudXNativeModule) return;
+    return CloudXNativeModule.clearAllTargeting();
   }
 
   // Banner Management
   async createBanner(config) {
-    if (Platform.OS !== 'ios') return { success: false };
-    return CloudXSDK.createBanner(config);
+    if (!CloudXNativeModule) return { success: false };
+    return CloudXNativeModule.createBanner(config);
   }
 
   async loadBanner(config) {
-    if (Platform.OS !== 'ios') return { success: false };
-    return CloudXSDK.loadBanner(config);
+    if (!CloudXNativeModule) return { success: false };
+    return CloudXNativeModule.loadBanner(config);
   }
 
   async showBanner(config) {
-    if (Platform.OS !== 'ios') return { success: false };
-    return CloudXSDK.showBanner(config);
+    if (!CloudXNativeModule) return { success: false };
+    return CloudXNativeModule.showBanner(config);
   }
 
   async hideBanner(config) {
-    if (Platform.OS !== 'ios') return { success: false };
-    return CloudXSDK.hideBanner(config);
+    if (!CloudXNativeModule) return { success: false };
+    return CloudXNativeModule.hideBanner(config);
   }
 
   async startAutoRefresh(config) {
-    if (Platform.OS !== 'ios') return { success: false };
-    return CloudXSDK.startAutoRefresh(config);
+    if (!CloudXNativeModule) return { success: false };
+    return CloudXNativeModule.startAutoRefresh(config);
   }
 
   async stopAutoRefresh(config) {
-    if (Platform.OS !== 'ios') return { success: false };
-    return CloudXSDK.stopAutoRefresh(config);
+    if (!CloudXNativeModule) return { success: false };
+    return CloudXNativeModule.stopAutoRefresh(config);
   }
 
   // Interstitial Management
   async createInterstitial(config) {
-    if (Platform.OS !== 'ios') return { success: false };
-    return CloudXSDK.createInterstitial(config);
+    if (!CloudXNativeModule) return { success: false };
+    return CloudXNativeModule.createInterstitial(config);
   }
 
   async loadInterstitial(config) {
-    if (Platform.OS !== 'ios') return { success: false };
-    return CloudXSDK.loadInterstitial(config);
+    if (!CloudXNativeModule) return { success: false };
+    return CloudXNativeModule.loadInterstitial(config);
   }
 
   async showInterstitial(config) {
-    if (Platform.OS !== 'ios') return { success: false };
-    return CloudXSDK.showInterstitial(config);
+    if (!CloudXNativeModule) return { success: false };
+    return CloudXNativeModule.showInterstitial(config);
   }
 
   async isInterstitialReady(config) {
-    if (Platform.OS !== 'ios') return false;
-    return CloudXSDK.isInterstitialReady(config);
+    if (!CloudXNativeModule) return false;
+    return CloudXNativeModule.isInterstitialReady(config);
   }
 
   // Rewarded Management
   async createRewarded(config) {
-    if (Platform.OS !== 'ios') return { success: false };
-    return CloudXSDK.createRewarded(config);
+    if (!CloudXNativeModule) return { success: false };
+    return CloudXNativeModule.createRewarded(config);
   }
 
   async loadRewarded(config) {
-    if (Platform.OS !== 'ios') return { success: false };
-    return CloudXSDK.loadRewarded(config);
+    if (!CloudXNativeModule) return { success: false };
+    return CloudXNativeModule.loadRewarded(config);
   }
 
   async showRewarded(config) {
-    if (Platform.OS !== 'ios') return { success: false };
-    return CloudXSDK.showRewarded(config);
+    if (!CloudXNativeModule) return { success: false };
+    return CloudXNativeModule.showRewarded(config);
   }
 
   async isRewardedReady(config) {
-    if (Platform.OS !== 'ios') return false;
-    return CloudXSDK.isRewardedReady(config);
+    if (!CloudXNativeModule) return false;
+    return CloudXNativeModule.isRewardedReady(config);
   }
 
   // Generic Ad Management
   async destroyAd(config) {
-    if (Platform.OS !== 'ios') return { success: false };
-    return CloudXSDK.destroyAd(config);
+    if (!CloudXNativeModule) return { success: false };
+    return CloudXNativeModule.destroyAd(config);
   }
 
   // Event Listeners

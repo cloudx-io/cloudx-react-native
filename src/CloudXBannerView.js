@@ -1,13 +1,15 @@
 import React from 'react';
 import { requireNativeComponent, Platform, View } from 'react-native';
 
-const NativeCloudXBannerView = Platform.OS === 'ios'
-  ? requireNativeComponent('CloudXBannerView')
-  : null;
+const NativeCloudXBannerView = Platform.select({
+  ios: requireNativeComponent('CloudXBannerView'),
+  android: requireNativeComponent('CloudXBannerView'),
+  default: null,
+});
 
 export const CloudXBannerView = (props) => {
-  if (Platform.OS !== 'ios') {
-    console.warn('CloudXBannerView is only supported on iOS');
+  if (!NativeCloudXBannerView) {
+    console.warn('CloudXBannerView is not supported on this platform');
     return <View {...props} />;
   }
 
