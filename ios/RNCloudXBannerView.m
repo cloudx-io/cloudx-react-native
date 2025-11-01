@@ -4,6 +4,7 @@
 //
 
 #import "RNCloudXBannerView.h"
+#import "NSError+CloudXDemo.h"
 #import <React/RCTLog.h>
 
 @interface RNCloudXBannerView ()
@@ -28,87 +29,86 @@
     }
 }
 
+- (void)setShouldLoad:(BOOL)shouldLoad {
+    _shouldLoad = shouldLoad;
+}
+
 - (void)didSetProps:(NSArray<NSString *> *)changedProps {
-    [super didSetProps:changedProps];
-    
-    // Only create the ad once we have all required props
-    if (!self.hasCreatedAd && self.placement && self.adId) {
-        [self createAndLoadBanner];
-    }
+    // This is called AFTER all props are set in the update cycle
+    // Dispatch async to avoid blocking React Native's prop update cycle
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (self.shouldLoad && !self.hasCreatedAd && self.placement && self.adId) {
+            [self createAndLoadBanner];
+        }
+    });
 }
 
 - (void)createAndLoadBanner {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (self.hasCreatedAd) {
-            return;
+    // Already on main queue from didSetProps, just execute directly
+    if (self.hasCreatedAd) {
+        return;
+    }
+    
+    UIViewController *viewController = [self reactViewController];
+    if (!viewController) {
+        RCTLogError(@"[CloudXBannerView] No view controller found");
+        if (self.onAdFailedToLoad) {
+            self.onAdFailedToLoad(@{
+                @"adId": self.adId ?: @"",
+                @"error": @"No view controller"
+            });
         }
+        return;
+    }
+    
+    RCTLogInfo(@"[CloudXBannerView] About to create banner/MREC...");
+    
+    // Determine if this is a banner or MREC
+    BOOL isMREC = [self.bannerSize isEqualToString:@"MREC"];
+    
+    if (isMREC) {
+        self.bannerAdView = [[CloudXCore shared] createMRECWithPlacement:self.placement
+                                                          viewController:viewController
+                                                                delegate:self];
+    } else {
+        self.bannerAdView = [[CloudXCore shared] createBannerWithPlacement:self.placement
+                                                            viewController:viewController
+                                                                  delegate:self
+                                                                      tmax:nil];
+    }
+    
+    if (self.bannerAdView) {
+        self.hasCreatedAd = YES;
         
-        if (![[CloudXCore shared] isInitialized]) {
-            RCTLogError(@"[CloudXBannerView] SDK not initialized");
-            if (self.onAdFailedToLoad) {
-                self.onAdFailedToLoad(@{
-                    @"adId": self.adId ?: @"",
-                    @"error": @"SDK not initialized"
-                });
-            }
-            return;
+        RCTLogInfo(@"[CloudXBannerView] Banner created, adding to view hierarchy...");
+        
+        // Add as subview
+        self.bannerAdView.translatesAutoresizingMaskIntoConstraints = NO;
+        [self addSubview:self.bannerAdView];
+        
+        // Setup constraints
+        [NSLayoutConstraint activateConstraints:@[
+            [self.bannerAdView.topAnchor constraintEqualToAnchor:self.topAnchor],
+            [self.bannerAdView.leftAnchor constraintEqualToAnchor:self.leftAnchor],
+            [self.bannerAdView.rightAnchor constraintEqualToAnchor:self.rightAnchor],
+            [self.bannerAdView.bottomAnchor constraintEqualToAnchor:self.bottomAnchor]
+        ]];
+        
+        RCTLogInfo(@"[CloudXBannerView] Calling load on %@...", isMREC ? @"MREC" : @"banner");
+        
+        // Load the ad
+        [self.bannerAdView load];
+        
+        RCTLogInfo(@"[CloudXBannerView] Load initiated for placement: %@", self.placement);
+    } else {
+        RCTLogError(@"[CloudXBannerView] Failed to create banner");
+        if (self.onAdFailedToLoad) {
+            self.onAdFailedToLoad(@{
+                @"adId": self.adId ?: @"",
+                @"error": @"Failed to create banner"
+            });
         }
-        
-        UIViewController *viewController = [self reactViewController];
-        if (!viewController) {
-            RCTLogError(@"[CloudXBannerView] No view controller found");
-            if (self.onAdFailedToLoad) {
-                self.onAdFailedToLoad(@{
-                    @"adId": self.adId ?: @"",
-                    @"error": @"No view controller"
-                });
-            }
-            return;
-        }
-        
-        // Determine if this is a banner or MREC
-        BOOL isMREC = [self.bannerSize isEqualToString:@"MREC"];
-        
-        if (isMREC) {
-            self.bannerAdView = [[CloudXCore shared] createMRECWithPlacement:self.placement
-                                                              viewController:viewController
-                                                                    delegate:self];
-        } else {
-            self.bannerAdView = [[CloudXCore shared] createBannerWithPlacement:self.placement
-                                                                viewController:viewController
-                                                                      delegate:self
-                                                                          tmax:nil];
-        }
-        
-        if (self.bannerAdView) {
-            self.hasCreatedAd = YES;
-            
-            // Add as subview
-            self.bannerAdView.translatesAutoresizingMaskIntoConstraints = NO;
-            [self addSubview:self.bannerAdView];
-            
-            // Setup constraints
-            [NSLayoutConstraint activateConstraints:@[
-                [self.bannerAdView.topAnchor constraintEqualToAnchor:self.topAnchor],
-                [self.bannerAdView.leftAnchor constraintEqualToAnchor:self.leftAnchor],
-                [self.bannerAdView.rightAnchor constraintEqualToAnchor:self.rightAnchor],
-                [self.bannerAdView.bottomAnchor constraintEqualToAnchor:self.bottomAnchor]
-            ]];
-            
-            // Load the ad
-            [self.bannerAdView load];
-            
-            RCTLogInfo(@"[CloudXBannerView] Created and loading %@ for placement: %@", isMREC ? @"MREC" : @"banner", self.placement);
-        } else {
-            RCTLogError(@"[CloudXBannerView] Failed to create banner");
-            if (self.onAdFailedToLoad) {
-                self.onAdFailedToLoad(@{
-                    @"adId": self.adId ?: @"",
-                    @"error": @"Failed to create banner"
-                });
-            }
-        }
-    });
+    }
 }
 
 #pragma mark - Helper
@@ -152,18 +152,37 @@
 
 - (void)failToLoadWithAd:(CLXAd *)ad error:(NSError *)error {
     RCTLogError(@"[CloudXBannerView] Banner failed to load: %@", error.localizedDescription);
+    
+    // Send event to React Native
     if (self.onAdFailedToLoad) {
         self.onAdFailedToLoad(@{
             @"adId": self.adId ?: @"",
             @"error": error.localizedDescription ?: @"Unknown error"
         });
     }
+    
+    // Show alert dialog like Objective-C demo app
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *errorMessage = error ? [error detailedDemoDescription] : @"Unknown error occurred";
+        NSString *adType = [self.bannerSize isEqualToString:@"MREC"] ? @"MREC" : @"Banner";
+        [self showAlertWithTitle:[NSString stringWithFormat:@"%@ Ad Load Failed", adType] message:errorMessage];
+    });
 }
 
 - (void)didShowWithAd:(CLXAd *)ad {
     RCTLogInfo(@"[CloudXBannerView] Banner shown");
     if (self.onAdShown) {
         self.onAdShown(@{@"adId": self.adId ?: @""});
+    }
+}
+
+- (void)failToShowWithAd:(CLXAd *)ad error:(NSError *)error {
+    RCTLogError(@"[CloudXBannerView] Banner failed to show: %@", error.localizedDescription);
+    if (self.onAdFailedToShow) {
+        self.onAdFailedToShow(@{
+            @"adId": self.adId ?: @"",
+            @"error": error.localizedDescription ?: @"Unknown error"
+        });
     }
 }
 
@@ -184,22 +203,56 @@
 // Optional delegate methods
 - (void)impressionOn:(CLXAd *)ad {
     RCTLogInfo(@"[CloudXBannerView] Banner impression");
+    if (self.onAdImpression) {
+        self.onAdImpression(@{@"adId": self.adId ?: @""});
+    }
 }
 
 - (void)revenuePaid:(CLXAd *)ad {
     RCTLogInfo(@"[CloudXBannerView] Banner revenue paid: %@", ad.revenue);
-}
-
-- (void)closedByUserActionWithAd:(CLXAd *)ad {
-    RCTLogInfo(@"[CloudXBannerView] Banner closed by user");
+    if (self.onAdRevenuePaid) {
+        NSMutableDictionary *eventData = [NSMutableDictionary dictionaryWithDictionary:@{
+            @"adId": self.adId ?: @""
+        }];
+        if (ad.revenue) {
+            eventData[@"revenue"] = @([ad.revenue doubleValue]);
+        }
+        self.onAdRevenuePaid(eventData);
+    }
 }
 
 - (void)didExpandAd:(CLXAd *)ad {
     RCTLogInfo(@"[CloudXBannerView] Banner expanded");
+    if (self.onAdExpanded) {
+        self.onAdExpanded(@{@"adId": self.adId ?: @""});
+    }
 }
 
 - (void)didCollapseAd:(CLXAd *)ad {
     RCTLogInfo(@"[CloudXBannerView] Banner collapsed");
+    if (self.onAdCollapsed) {
+        self.onAdCollapsed(@{@"adId": self.adId ?: @""});
+    }
+}
+
+#pragma mark - Alert Helper
+
+- (void)showAlertWithTitle:(NSString *)title message:(NSString *)message {
+    UIViewController *viewController = [self reactViewController];
+    if (!viewController) {
+        RCTLogError(@"[CloudXBannerView] Cannot show alert - no view controller");
+        return;
+    }
+    
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
+                                                                   message:message
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alert addAction:[UIAlertAction actionWithTitle:@"OK"
+                                              style:UIAlertActionStyleDefault
+                                            handler:nil]];
+    
+    [viewController presentViewController:alert animated:YES completion:nil];
 }
 
 @end

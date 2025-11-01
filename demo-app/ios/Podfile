@@ -1,45 +1,42 @@
-# Podfile for CloudX React Native Demo App
+# Podfile for CloudX React Native Demo App (React Native 0.76)
 
 require_relative '../node_modules/react-native/scripts/react_native_pods'
-require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
 
-platform :ios, '13.0'
-install! 'cocoapods', :deterministic_uuids => false
+platform :ios, '15.1'
+prepare_react_native_project!
 
 target 'CloudXReactNativeDemo' do
+  # Enable autolinking for React Native modules
   config = use_native_modules!
-
-  # Flags change depending on the env values.
-  flags = get_default_flags()
-
+  
   use_react_native!(
     :path => config[:reactNativePath],
-    :hermes_enabled => flags[:hermes_enabled],
-    :fabric_enabled => flags[:fabric_enabled],
+    :hermes_enabled => true,
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
   # CloudX React Native SDK (local)
   pod 'cloudx-react-native', :path => '../..'
   
-  # CloudXCore SDK (local development) 
-  # Adjust path based on your monorepo structure
-  pod 'CloudXCore', :path => '../../cloudx-ios/core'
+  # CloudXCore SDK (local development)
+  pod 'CloudXCore', :path => '../../../cloudx-ios/core'
   
-  # CloudX Meta Adapter (optional, for Meta ads)
-  # pod 'CloudXMetaAdapter', :path => '../../cloudx-ios/adapter-meta'
-
-  target 'CloudXReactNativeDemoTests' do
-    inherit! :complete
-    # Pods for testing
-  end
+  # CloudX Adapters (ad network integrations)
+  pod 'CloudXMetaAdapter', :path => '../../../cloudx-ios/adapter-meta'
+  pod 'CloudXPrebidAdapter', :path => '../../../cloudx-ios/adapter-cloudx'
 
   post_install do |installer|
     react_native_post_install(
       installer,
-      :mac_catalyst_enabled => false
+      config[:reactNativePath]
     )
-    __apply_Xcode_12_5_M1_post_install_workaround(installer)
+    
+    # React Native enforces strict modularity requirements that standard iOS builds don't have.
+    # Disable the non-modular-include warning entirely for all targets.
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['CLANG_WARN_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'NO'
+      end
+    end
   end
 end
-

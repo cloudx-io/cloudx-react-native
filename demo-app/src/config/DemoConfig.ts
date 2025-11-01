@@ -15,36 +15,36 @@ export interface DemoEnvironmentConfig {
 }
 
 export class DemoConfig {
-  // iOS Configurations
+  // iOS Configurations (React Native Demo App - bundle: cloudx.CloudXReactNativeDemo)
   static readonly iosDev: DemoEnvironmentConfig = {
     name: 'Development',
-    appKey: 'g0PdN9_0ilfIcuNXhBopl',
+    appKey: '7pluPvPHaM8PD6LtW2sa-',
     hashedUserId: 'test-user-123',
-    bannerPlacement: 'metaBanner',
-    mrecPlacement: 'metaMREC',
-    interstitialPlacement: 'metaInterstitial',
-    nativePlacement: 'metaNative',
-    rewardedPlacement: 'metaRewarded',
+    bannerPlacement: 'rn-demo-banner-1',
+    mrecPlacement: 'rn-demo-mrec-1',
+    interstitialPlacement: 'rn-demo-interstitial-1',
+    nativePlacement: '-',
+    rewardedPlacement: '-',
   };
 
   static readonly iosStaging: DemoEnvironmentConfig = {
     name: 'Staging',
-    appKey: 'A7ovaBRCcAL8lapKtoZmm',
+    appKey: '7pluPvPHaM8PD6LtW2sa-',
     hashedUserId: 'test-user-123-staging',
-    bannerPlacement: 'objcDemo-banner-1',
-    mrecPlacement: 'objcDemo-mrec-1',
-    interstitialPlacement: 'objcDemo-interstitial-1',
+    bannerPlacement: 'rn-demo-banner-1',
+    mrecPlacement: 'rn-demo-mrec-1',
+    interstitialPlacement: 'rn-demo-interstitial-1',
     nativePlacement: '-',
     rewardedPlacement: '-',
   };
 
   static readonly iosProduction: DemoEnvironmentConfig = {
     name: 'Production',
-    appKey: 'ZFyiqxXWTOGYclwHElLbM',
+    appKey: '7pluPvPHaM8PD6LtW2sa-',
     hashedUserId: 'prod-user-123',
-    bannerPlacement: 'flutter-demo-banner-1',
-    mrecPlacement: 'flutter-demo-mrec-1',
-    interstitialPlacement: 'flutter-demo-interstitial-1',
+    bannerPlacement: 'rn-demo-banner-1',
+    mrecPlacement: 'rn-demo-mrec-1',
+    interstitialPlacement: 'rn-demo-interstitial-1',
     nativePlacement: '-',
     rewardedPlacement: '-',
   };

@@ -9,9 +9,9 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
-import { CloudXSDKManager, CloudXEventTypes } from 'cloudx-react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { CloudXBannerView } from 'cloudx-react-native';
 import { DemoEnvironmentConfig } from '../config/DemoConfig';
 import { logger } from '../utils/DemoAppLogger';
 
@@ -20,165 +20,81 @@ interface MRECScreenProps {
 }
 
 const MRECScreen: React.FC<MRECScreenProps> = ({ environment }) => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const [currentAdId, setCurrentAdId] = useState<string | null>(null);
   const [status, setStatus] = useState('No Ad Loaded');
   const [statusColor, setStatusColor] = useState('#F44336');
+  const [shouldRenderMREC, setShouldRenderMREC] = useState(false);
+  const [key, setKey] = useState(0);
 
-  // Generate unique ad ID
-  const generateAdId = () => `mrec_${Date.now()}`;
-
-  // Setup event listeners
+  // Clear logs on initial mount
   useEffect(() => {
-    const onLoaded = CloudXSDKManager.addEventListener(
-      CloudXEventTypes.BANNER_LOADED, // MREC uses banner events
-      (event) => {
-        if (event.adId === currentAdId) {
-          logger.logAdEvent('✅ MREC loaded', event);
-          setIsLoaded(true);
-          setIsLoading(false);
-          setStatus('MREC Ad Loaded');
-          setStatusColor('#4CAF50');
-        }
-      }
-    );
+    logger.clearLogs();
+  }, []);
 
-    const onFailedToLoad = CloudXSDKManager.addEventListener(
-      CloudXEventTypes.BANNER_FAILED_TO_LOAD,
-      (event) => {
-        if (event.adId === currentAdId) {
-          logger.logAdEvent('❌ MREC failed to load', event);
-          logger.logMessage(`  Error: ${event.error}`);
-          setIsLoaded(false);
-          setIsLoading(false);
-          setStatus(`Failed: ${event.error}`);
-          setStatusColor('#F44336');
-        }
-      }
-    );
-
-    const onShown = CloudXSDKManager.addEventListener(
-      CloudXEventTypes.BANNER_SHOWN,
-      (event) => {
-        if (event.adId === currentAdId) {
-          logger.logAdEvent('👀 MREC shown', event);
-          setIsVisible(true);
-          setStatus('MREC Ad Visible');
-          setStatusColor('#4CAF50');
-        }
-      }
-    );
-
-    const onHidden = CloudXSDKManager.addEventListener(
-      CloudXEventTypes.BANNER_HIDDEN,
-      (event) => {
-        if (event.adId === currentAdId) {
-          logger.logAdEvent('🙈 MREC hidden', event);
-          setIsVisible(false);
-          setStatus('MREC Ad Hidden');
-          setStatusColor('#FF9800');
-        }
-      }
-    );
-
-    const onClicked = CloudXSDKManager.addEventListener(
-      CloudXEventTypes.BANNER_CLICKED,
-      (event) => {
-        if (event.adId === currentAdId) {
-          logger.logAdEvent('👆 MREC clicked', event);
-          setStatus('MREC Ad Clicked');
-        }
-      }
-    );
-
-    return () => {
-      onLoaded.remove();
-      onFailedToLoad.remove();
-      onShown.remove();
-      onHidden.remove();
-      onClicked.remove();
-
-      // Cleanup ad on unmount
-      if (currentAdId) {
-        CloudXSDKManager.stopAutoRefresh({ adId: currentAdId }).catch(() => {});
-        CloudXSDKManager.destroyAd({ adId: currentAdId }).catch(() => {});
-      }
-    };
-  }, [currentAdId]);
-
-  const handleLoad = async () => {
-    logger.logMessage('🔄 User clicked Load MREC');
-    setIsLoading(true);
-    setStatus('Loading...');
-    setStatusColor('#FF9800');
-
-    const adId = generateAdId();
-    setCurrentAdId(adId);
-
-    try {
-      // Create MREC (uses banner API with MREC placement)
-      await CloudXSDKManager.createBanner({
-        placement: environment.mrecPlacement,
-        adId,
-      });
-
-      // Load MREC
-      await CloudXSDKManager.loadBanner({ adId });
-      
-      // Auto-show after load
-      await CloudXSDKManager.showBanner({ adId });
-      
-      // Enable auto-refresh
-      await CloudXSDKManager.startAutoRefresh({ adId });
-    } catch (error) {
-      logger.logMessage(`❌ Error creating/loading MREC: ${error}`);
-      setIsLoading(false);
-      setStatus(`Error: ${error}`);
-      setStatusColor('#F44336');
-    }
-  };
-
-  const handleHide = async () => {
-    if (!currentAdId || !isVisible) return;
-
-    logger.logMessage('🙈 User clicked Hide MREC');
-    try {
-      await CloudXSDKManager.hideBanner({ adId: currentAdId });
-    } catch (error) {
-      logger.logMessage(`❌ Error hiding MREC: ${error}`);
-    }
-  };
-
-  const handleShow = async () => {
-    if (!currentAdId || isVisible) return;
-
-    logger.logMessage('👀 User clicked Show MREC');
-    try {
-      await CloudXSDKManager.showBanner({ adId: currentAdId });
-    } catch (error) {
-      logger.logMessage(`❌ Error showing MREC: ${error}`);
-    }
-  };
-
-  const handleStop = async () => {
-    if (!currentAdId) return;
-
-    logger.logMessage('🛑 User clicked Stop');
-    try {
-      await CloudXSDKManager.stopAutoRefresh({ adId: currentAdId });
-      await CloudXSDKManager.hideBanner({ adId: currentAdId });
-      await CloudXSDKManager.destroyAd({ adId: currentAdId });
-      
-      setCurrentAdId(null);
-      setIsLoaded(false);
-      setIsVisible(false);
+  // Reset state when screen gains focus (tab switching)
+  useFocusEffect(
+    React.useCallback(() => {
+      setShouldRenderMREC(false);
       setStatus('No Ad Loaded');
       setStatusColor('#F44336');
-    } catch (error) {
-      logger.logMessage(`❌ Error stopping MREC: ${error}`);
+    }, [])
+  );
+
+  const handleLoadMREC = () => {
+    setStatus('Loading...');
+    setStatusColor('#FF9800');
+    setShouldRenderMREC(true);
+    setKey(prev => prev + 1); // Force new instance
+  };
+
+  const handleAdLoaded = (event: any) => {
+    logger.logAdEvent('✅ MREC loaded', event);
+    setStatus('MREC Ad Loaded');
+    setStatusColor('#4CAF50');
+  };
+
+  const handleAdFailedToLoad = (event: any) => {
+    logger.logAdEvent('❌ MREC failed to load', event);
+    logger.logMessage(`  Error: ${event.error}`);
+    setStatus(`Failed: ${event.error}`);
+    setStatusColor('#F44336');
+    setShouldRenderMREC(false); // Hide on error
+  };
+
+  const handleAdShown = (event: any) => {
+    logger.logAdEvent('👀 MREC shown', event);
+  };
+
+  const handleAdClicked = (event: any) => {
+    logger.logAdEvent('👆 MREC clicked', event);
+    setStatus('MREC Ad Clicked');
+  };
+
+  const handleAdHidden = (event: any) => {
+    logger.logAdEvent('🙈 MREC hidden', event);
+  };
+
+  const handleAdFailedToShow = (event: any) => {
+    logger.logAdEvent('❌ MREC failed to show', event);
+    logger.logMessage(`  Error: ${event.error}`);
+  };
+
+  const handleAdImpression = (event: any) => {
+    logger.logAdEvent('👁️ MREC impression', event);
+  };
+
+  const handleAdRevenuePaid = (event: any) => {
+    logger.logAdEvent('💰 MREC revenue paid', event);
+    if (event.revenue) {
+      logger.logMessage(`  Revenue: $${event.revenue}`);
     }
+  };
+
+  const handleAdExpanded = (event: any) => {
+    logger.logAdEvent('📤 MREC expanded', event);
+  };
+
+  const handleAdCollapsed = (event: any) => {
+    logger.logAdEvent('📥 MREC collapsed', event);
   };
 
   return (
@@ -196,92 +112,50 @@ const MRECScreen: React.FC<MRECScreenProps> = ({ environment }) => {
         </Text>
       </View>
 
-      {/* Action Buttons */}
-      <View style={styles.buttonsContainer}>
-        {!isLoaded ? (
-          <TouchableOpacity
-            style={[
-              styles.button,
-              styles.loadButton,
-              isLoading && styles.buttonDisabled,
-            ]}
-            onPress={handleLoad}
-            disabled={isLoading}>
-            {isLoading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.buttonText}>Load / Show</Text>
-            )}
-          </TouchableOpacity>
-        ) : (
-          <>
-            <TouchableOpacity
-              style={[
-                styles.button,
-                styles.hideButton,
-                !isVisible && styles.buttonDisabled,
-              ]}
-              onPress={handleHide}
-              disabled={!isVisible}>
-              <Text style={styles.buttonText}>Hide</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.button,
-                styles.showButton,
-                isVisible && styles.buttonDisabled,
-              ]}
-              onPress={handleShow}
-              disabled={isVisible}>
-              <Text style={styles.buttonText}>Show</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.button, styles.stopButton]}
-              onPress={handleStop}>
-              <Text style={styles.buttonText}>Stop</Text>
-            </TouchableOpacity>
-          </>
-        )}
+      {/* Load Button */}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={[
+            styles.loadButton,
+            shouldRenderMREC && styles.loadButtonDisabled
+          ]}
+          onPress={handleLoadMREC}
+          disabled={shouldRenderMREC}>
+          <Text style={styles.buttonText}>Load MREC</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.spacer} />
 
-      {/* MREC Display Area */}
+      {/* MREC Display Area - ONLY render when button pressed */}
       <View style={styles.mrecContainer}>
-        {isLoaded && isVisible ? (
-          <View style={styles.mrecPlaceholder}>
-            <Text style={styles.mrecPlaceholderText}>
-              ⬜ MREC Ad (300x250)
-            </Text>
-            <Text style={styles.mrecNote}>
-              Note: Native MREC view rendering requires UIView integration
-            </Text>
-          </View>
+        {shouldRenderMREC ? (
+          <CloudXBannerView
+            key={key}
+            placement={environment.mrecPlacement}
+            adId={`mrec_${key}_${Date.now()}`}
+            bannerSize="MREC"
+            shouldLoad={true}
+            onAdLoaded={handleAdLoaded}
+            onAdFailedToLoad={handleAdFailedToLoad}
+            onAdShown={handleAdShown}
+            onAdFailedToShow={handleAdFailedToShow}
+            onAdClicked={handleAdClicked}
+            onAdHidden={handleAdHidden}
+            onAdImpression={handleAdImpression}
+            onAdRevenuePaid={handleAdRevenuePaid}
+            onAdExpanded={handleAdExpanded}
+            onAdCollapsed={handleAdCollapsed}
+            style={styles.mrec}
+          />
         ) : (
           <View style={styles.emptyMREC}>
-            <Text style={styles.emptyText}>No MREC displayed</Text>
+            <Text style={styles.emptyText}>Press "Load MREC" to display</Text>
           </View>
         )}
       </View>
 
-      {/* Info Container */}
-      <View style={styles.infoContainer}>
-        <Text style={styles.infoTitle}>MREC Ads (300x250)</Text>
-        <Text style={styles.infoText}>
-          • Medium Rectangle format
-        </Text>
-        <Text style={styles.infoText}>
-          • Larger than banner ads
-        </Text>
-        <Text style={styles.infoText}>
-          • Better viewability & engagement
-        </Text>
-        <Text style={styles.infoText}>
-          • Auto-refresh support
-        </Text>
-      </View>
+      <View style={styles.spacer} />
     </View>
   );
 };
@@ -311,31 +185,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  buttonsContainer: {
+  buttonContainer: {
     paddingHorizontal: 20,
     paddingTop: 24,
-    gap: 12,
-  },
-  button: {
-    height: 44,
-    borderRadius: 8,
-    justifyContent: 'center',
     alignItems: 'center',
   },
   loadButton: {
-    backgroundColor: '#2196F3',
-  },
-  hideButton: {
-    backgroundColor: '#FF9800',
-  },
-  showButton: {
     backgroundColor: '#4CAF50',
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+    minWidth: 200,
+    alignItems: 'center',
   },
-  stopButton: {
-    backgroundColor: '#F44336',
-  },
-  buttonDisabled: {
-    backgroundColor: '#BDBDBD',
+  loadButtonDisabled: {
+    backgroundColor: '#9E9E9E',
   },
   buttonText: {
     color: '#FFFFFF',
@@ -348,61 +212,25 @@ const styles = StyleSheet.create({
   mrecContainer: {
     alignItems: 'center',
     paddingVertical: 20,
+    backgroundColor: '#F5F5F5',
+    minHeight: 290,
+    justifyContent: 'center',
   },
-  mrecPlaceholder: {
+  mrec: {
     width: 300,
     height: 250,
-    backgroundColor: '#E3F2FD',
-    borderWidth: 2,
-    borderColor: '#2196F3',
-    borderStyle: 'dashed',
-    borderRadius: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mrecPlaceholderText: {
-    fontSize: 16,
-    color: '#2196F3',
-    fontWeight: '600',
-  },
-  mrecNote: {
-    fontSize: 10,
-    color: '#757575',
-    marginTop: 8,
-    textAlign: 'center',
-    paddingHorizontal: 20,
   },
   emptyMREC: {
     width: 300,
     height: 250,
-    backgroundColor: '#FAFAFA',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 4,
+    backgroundColor: '#E0E0E0',
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 4,
   },
   emptyText: {
+    color: '#757575',
     fontSize: 14,
-    color: '#9E9E9E',
-  },
-  infoContainer: {
-    margin: 20,
-    padding: 16,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  infoTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  infoText: {
-    fontSize: 14,
-    marginBottom: 6,
-    color: '#424242',
   },
 });
 
