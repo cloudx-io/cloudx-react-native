@@ -25,10 +25,13 @@ const MRECScreen: React.FC<MRECScreenProps> = ({ environment }) => {
   const [shouldRenderMREC, setShouldRenderMREC] = useState(false);
   const [key, setKey] = useState(0);
 
-  // Clear logs when screen gains focus
+  // Clear logs and reset state when screen gains focus
   useFocusEffect(
     React.useCallback(() => {
       logger.clearLogs();
+      setShouldRenderMREC(false);
+      setStatus('No Ad Loaded');
+      setStatusColor('#F44336');
     }, [])
   );
 

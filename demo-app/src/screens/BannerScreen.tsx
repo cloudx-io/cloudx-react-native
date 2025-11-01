@@ -25,10 +25,13 @@ const BannerScreen: React.FC<BannerScreenProps> = ({ environment }) => {
   const [shouldRenderBanner, setShouldRenderBanner] = useState(false);
   const [key, setKey] = useState(0);
 
-  // Clear logs when screen gains focus
+  // Clear logs and reset state when screen gains focus
   useFocusEffect(
     React.useCallback(() => {
       logger.clearLogs();
+      setShouldRenderBanner(false);
+      setStatus('No Ad Loaded');
+      setStatusColor('#F44336');
     }, [])
   );
 
